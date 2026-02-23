@@ -1,0 +1,51 @@
+{
+  "name": "Validator",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Email user yang terhubung"
+    },
+    "full_name": {
+      "type": "string",
+      "description": "Nama lengkap validator"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "kepala_desa",
+        "kepala_dusun",
+        "rt",
+        "rw"
+      ],
+      "description": "Jabatan validator"
+    },
+    "village": {
+      "type": "string",
+      "description": "Desa wilayah tugas"
+    },
+    "district": {
+      "type": "string",
+      "description": "Kecamatan wilayah tugas"
+    },
+    "regency": {
+      "type": "string",
+      "description": "Kabupaten wilayah tugas"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Nomor telepon"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Status aktif validator"
+    }
+  },
+  "required": [
+    "user_email",
+    "full_name",
+    "role",
+    "village"
+  ]
+}

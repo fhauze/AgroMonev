@@ -1,0 +1,6 @@
+{
+  "appId": "probindo.com",
+  "appName": "agroforesty",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}

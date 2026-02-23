@@ -1,0 +1,76 @@
+{
+  "name": "Plant",
+  "type": "object",
+  "properties": {
+    "land_id": {
+      "type": "string",
+      "description": "ID lahan"
+    },
+    "farmer_id": {
+      "type": "string",
+      "description": "ID petani"
+    },
+    "commodity_id": {
+      "type": "string",
+      "description": "ID komoditas"
+    },
+    "commodity_name": {
+      "type": "string",
+      "description": "Nama komoditas (denormalized)"
+    },
+    "latitude": {
+      "type": "number",
+      "description": "Latitude titik tanam"
+    },
+    "longitude": {
+      "type": "number",
+      "description": "Longitude titik tanam"
+    },
+    "plant_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Tanggal tanam"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "alive",
+        "dead",
+        "harvested",
+        "sick"
+      ],
+      "default": "alive",
+      "description": "Status tanaman"
+    },
+    "age_months": {
+      "type": "number",
+      "description": "Umur tanaman dalam bulan"
+    },
+    "last_inspection_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Tanggal inspeksi terakhir"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Catatan tambahan"
+    },
+    "sync_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "synced",
+        "failed"
+      ],
+      "default": "pending"
+    }
+  },
+  "required": [
+    "land_id",
+    "farmer_id",
+    "commodity_name",
+    "latitude",
+    "longitude",
+    "plant_date"
+  ]
+}

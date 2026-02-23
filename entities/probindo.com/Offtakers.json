@@ -1,0 +1,50 @@
+{
+  "name": "Offtaker",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Email akun user"
+    },
+    "company_name": {
+      "type": "string",
+      "description": "Nama perusahaan/pembeli"
+    },
+    "contact_name": {
+      "type": "string",
+      "description": "Nama kontak"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Nomor telepon"
+    },
+    "address": {
+      "type": "string",
+      "description": "Alamat"
+    },
+    "commodities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Daftar komoditas yang dibeli"
+    },
+    "coverage_regencies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Daftar kabupaten cakupan"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Status aktif"
+    }
+  },
+  "required": [
+    "user_email",
+    "company_name",
+    "contact_name"
+  ]
+}

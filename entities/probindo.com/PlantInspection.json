@@ -1,0 +1,99 @@
+{
+  "name": "PlantInspection",
+  "type": "object",
+  "properties": {
+    "plant_id": {
+      "type": "string",
+      "description": "ID tanaman"
+    },
+    "land_id": {
+      "type": "string",
+      "description": "ID lahan"
+    },
+    "farmer_id": {
+      "type": "string",
+      "description": "ID petani"
+    },
+    "inspection_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Tanggal inspeksi"
+    },
+    "inspector_email": {
+      "type": "string",
+      "description": "Email inspektor"
+    },
+    "inspector_name": {
+      "type": "string",
+      "description": "Nama inspektor"
+    },
+    "health_status": {
+      "type": "string",
+      "enum": [
+        "healthy",
+        "mild_issue",
+        "moderate_issue",
+        "severe_issue"
+      ],
+      "description": "Status kesehatan"
+    },
+    "productivity_status": {
+      "type": "string",
+      "enum": [
+        "productive",
+        "less_productive",
+        "not_productive"
+      ],
+      "description": "Status produktivitas"
+    },
+    "issue_type": {
+      "type": "string",
+      "enum": [
+        "none",
+        "pest",
+        "disease",
+        "weather",
+        "nutrient_deficiency",
+        "water_shortage",
+        "other"
+      ],
+      "default": "none",
+      "description": "Jenis masalah"
+    },
+    "issue_description": {
+      "type": "string",
+      "description": "Deskripsi masalah"
+    },
+    "recommendation": {
+      "type": "string",
+      "description": "Rekomendasi tindakan"
+    },
+    "photo_urls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Foto-foto inspeksi"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Catatan tambahan"
+    },
+    "sync_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "synced",
+        "failed"
+      ],
+      "default": "pending"
+    }
+  },
+  "required": [
+    "plant_id",
+    "land_id",
+    "inspection_date",
+    "health_status",
+    "productivity_status"
+  ]
+}

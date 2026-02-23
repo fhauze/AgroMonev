@@ -1,0 +1,117 @@
+{
+  "name": "Plant",
+  "type": "object",
+  "properties": {
+    "land_id": {
+      "type": "string",
+      "description": "ID lahan"
+    },
+    "farmer_id": {
+      "type": "string",
+      "description": "ID petani"
+    },
+    "commodity_id": {
+      "type": "string",
+      "description": "ID komoditas"
+    },
+    "commodity_name": {
+      "type": "string",
+      "description": "Nama komoditas (denormalized)"
+    },
+    "latitude": {
+      "type": "number",
+      "description": "Latitude titik tanam"
+    },
+    "longitude": {
+      "type": "number",
+      "description": "Longitude titik tanam"
+    },
+    "plant_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Tanggal tanam"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "alive",
+        "dead",
+        "harvested",
+        "sick"
+      ],
+      "default": "alive",
+      "description": "Status tanaman"
+    },
+    "productivity_status": {
+      "type": "string",
+      "enum": [
+        "productive",
+        "less_productive",
+        "not_productive"
+      ],
+      "default": "productive",
+      "description": "Status produktivitas tanaman"
+    },
+    "issue_type": {
+      "type": "string",
+      "enum": [
+        "none",
+        "pest",
+        "disease",
+        "weather",
+        "nutrient_deficiency",
+        "water_shortage",
+        "other"
+      ],
+      "default": "none",
+      "description": "Jenis masalah/penyebab tidak produktif"
+    },
+    "issue_description": {
+      "type": "string",
+      "description": "Deskripsi masalah/penyakit"
+    },
+    "age_months": {
+      "type": "number",
+      "description": "Umur tanaman dalam bulan"
+    },
+    "last_inspection_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Tanggal inspeksi terakhir"
+    },
+    "expected_harvest_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Perkiraan tanggal panen"
+    },
+    "estimated_yield_kg": {
+      "type": "number",
+      "description": "Estimasi hasil panen dalam kg"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Catatan tambahan"
+    },
+    "photo_url": {
+      "type": "string",
+      "description": "Foto kondisi tanaman"
+    },
+    "sync_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "synced",
+        "failed"
+      ],
+      "default": "pending"
+    }
+  },
+  "required": [
+    "land_id",
+    "farmer_id",
+    "commodity_name",
+    "latitude",
+    "longitude",
+    "plant_date"
+  ]
+}

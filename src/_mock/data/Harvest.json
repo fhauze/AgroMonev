@@ -1,0 +1,15 @@
+[
+  {
+    "id": "bab2de5e-7ae3-4c84-9f1e-35b47ea672ab",
+    "land_id": "48dbc9df-49ed-48e3-a3ae-7b55a9ca95fc",
+    "plant_id": "2429e173-bad1-4069-967e-d6c98aa32e92",
+    "commodity_name": "Kopi Arabika",
+    "weight_kg": 10,
+    "harvest_date": "2026-02-16",
+    "notes": "Kualitas A",
+    "farmer_id": "2d2e68a9-2e50-48e8-9adb-98f9274003cc",
+    "sync_status": "pending",
+    "created_at": "2026-02-16T10:24:32.388Z",
+    "created_date": "2026-02-16T10:24:32.396Z"
+  }
+]

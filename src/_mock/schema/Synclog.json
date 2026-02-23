@@ -1,0 +1,57 @@
+{
+  "name": "SyncLog",
+  "type": "object",
+  "properties": {
+    "device_id": {
+      "type": "string",
+      "description": "ID perangkat yang melakukan sync"
+    },
+    "farmer_id": {
+      "type": "string",
+      "description": "ID petani yang melakukan sync"
+    },
+    "sync_type": {
+      "type": "string",
+      "enum": [
+        "full",
+        "partial",
+        "retry"
+      ],
+      "description": "Tipe sinkronisasi"
+    },
+    "records_pushed": {
+      "type": "number",
+      "description": "Jumlah record yang dikirim"
+    },
+    "records_success": {
+      "type": "number",
+      "description": "Jumlah record berhasil"
+    },
+    "records_failed": {
+      "type": "number",
+      "description": "Jumlah record gagal"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "success",
+        "partial",
+        "failed"
+      ],
+      "description": "Status keseluruhan sync"
+    },
+    "error_message": {
+      "type": "string",
+      "description": "Pesan error jika ada"
+    },
+    "duration_seconds": {
+      "type": "number",
+      "description": "Durasi sync dalam detik"
+    }
+  },
+  "required": [
+    "device_id",
+    "sync_type",
+    "status"
+  ]
+}

@@ -1,0 +1,29 @@
+[
+  {
+    "id": "574b572e-4225-4e10-b41c-b49607f61d01",
+    "user_email": "fauzgabriel@gmail.com",
+    "full_name": "fauz",
+    "role": "kepala_desa",
+    "village": "asxax",
+    "district": "saxsa",
+    "regency": "Kota Adm. Jakarta Selatan",
+    "phone": "242342",
+    "is_active": true,
+    "created_date": "2026-02-11T03:27:00.612Z",
+    "sync_status": "pending"
+  },
+  {
+    "id": "c398dee1-1f97-444c-b367-f546eaed9c78",
+    "user_email": "user@valid.com",
+    "full_name": "Validator 1",
+    "role": "kepala_desa",
+    "village": "Desa selatan",
+    "district": "Selatan",
+    "regency": "Selat",
+    "province": "13",
+    "phone": "3243242",
+    "is_active": true,
+    "created_date": "2026-02-18T09:17:14.253Z",
+    "sync_status": "pending"
+  }
+]

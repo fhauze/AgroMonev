@@ -1,0 +1,43 @@
+[{
+  "name": "Commodity",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Nama komoditas"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "perkebunan",
+        "pangan",
+        "hortikultura",
+        "kehutanan"
+      ],
+      "description": "Kategori komoditas"
+    },
+    "min_area_hectares": {
+      "type": "number",
+      "description": "Luas minimum yang dibutuhkan (hektar)"
+    },
+    "suitable_regions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Daftar wilayah yang cocok"
+    },
+    "icon": {
+      "type": "string",
+      "description": "Emoji atau ikon komoditas"
+    },
+    "color": {
+      "type": "string",
+      "description": "Warna untuk visualisasi"
+    }
+  },
+  "required": [
+    "name",
+    "category"
+  ]
+}]

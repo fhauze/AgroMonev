@@ -1,0 +1,88 @@
+{
+  "name": "Land",
+  "type": "object",
+  "properties": {
+    "farmer_id": {
+      "type": "string",
+      "description": "ID petani pemilik lahan"
+    },
+    "name": {
+      "type": "string",
+      "description": "Nama/label lahan"
+    },
+    "polygon_coordinates": {
+      "type": "array",
+      "description": "Koordinat polygon lahan dalam format [[lng, lat], ...]",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "number"
+        }
+      }
+    },
+    "center_lat": {
+      "type": "number",
+      "description": "Latitude titik tengah lahan"
+    },
+    "center_lng": {
+      "type": "number",
+      "description": "Longitude titik tengah lahan"
+    },
+    "area_hectares": {
+      "type": "number",
+      "description": "Luas lahan dalam hektar"
+    },
+    "land_status": {
+      "type": "string",
+      "enum": [
+        "owned",
+        "rented",
+        "shared",
+        "government"
+      ],
+      "description": "Status kepemilikan lahan"
+    },
+    "validation_status": {
+      "type": "string",
+      "enum": [
+        "valid",
+        "invalid",
+        "need_review",
+        "pending"
+      ],
+      "default": "pending",
+      "description": "Status validasi lahan"
+    },
+    "validation_notes": {
+      "type": "string",
+      "description": "Catatan hasil validasi"
+    },
+    "village": {
+      "type": "string",
+      "description": "Desa lokasi lahan"
+    },
+    "district": {
+      "type": "string",
+      "description": "Kecamatan lokasi lahan"
+    },
+    "regency": {
+      "type": "string",
+      "description": "Kabupaten lokasi lahan"
+    },
+    "sync_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "synced",
+        "failed"
+      ],
+      "default": "pending"
+    }
+  },
+  "required": [
+    "farmer_id",
+    "name",
+    "center_lat",
+    "center_lng"
+  ]
+}

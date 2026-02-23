@@ -1,0 +1,83 @@
+{
+  "name": "Farmer",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "ID user yang terhubung dengan petani ini"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Email user yang terhubung"
+    },
+    "nik": {
+      "type": "string",
+      "description": "Nomor Induk Kependudukan"
+    },
+    "full_name": {
+      "type": "string",
+      "description": "Nama lengkap petani"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Nomor telepon"
+    },
+    "farmer_group": {
+      "type": "string",
+      "description": "Nama kelompok tani"
+    },
+    "village": {
+      "type": "string",
+      "description": "Desa"
+    },
+    "district": {
+      "type": "string",
+      "description": "Kecamatan"
+    },
+    "regency": {
+      "type": "string",
+      "description": "Kabupaten"
+    },
+    "province": {
+      "type": "string",
+      "description": "Provinsi"
+    },
+    "photo_url": {
+      "type": "string",
+      "description": "URL foto petani"
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "verified",
+        "rejected"
+      ],
+      "default": "pending",
+      "description": "Status verifikasi petani"
+    },
+    "sync_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "synced",
+        "failed"
+      ],
+      "default": "pending",
+      "description": "Status sinkronisasi data"
+    },
+    "last_synced_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Waktu terakhir sinkronisasi"
+    }
+  },
+  "required": [
+    "nik",
+    "full_name",
+    "village",
+    "district",
+    "regency",
+    "province"
+  ]
+}

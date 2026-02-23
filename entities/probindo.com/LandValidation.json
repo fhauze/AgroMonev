@@ -1,0 +1,51 @@
+{
+  "name": "LandValidation",
+  "type": "object",
+  "properties": {
+    "land_id": {
+      "type": "string",
+      "description": "ID lahan yang divalidasi"
+    },
+    "validator_role": {
+      "type": "string",
+      "enum": [
+        "kepala_desa",
+        "kepala_dusun",
+        "rt",
+        "rw"
+      ],
+      "description": "Jabatan validator"
+    },
+    "validator_name": {
+      "type": "string",
+      "description": "Nama validator"
+    },
+    "validator_email": {
+      "type": "string",
+      "description": "Email akun validator"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "approved",
+        "rejected"
+      ],
+      "description": "Hasil validasi"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Catatan validasi"
+    },
+    "validated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Waktu validasi"
+    }
+  },
+  "required": [
+    "land_id",
+    "validator_role",
+    "validator_name",
+    "status"
+  ]
+}

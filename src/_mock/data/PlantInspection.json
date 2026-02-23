@@ -1,0 +1,47 @@
+[
+  {
+    "id": "19301079-4a7c-4a3a-95c8-dde901bdac01",
+    "plant_id": "2429e173-bad1-4069-967e-d6c98aa32e92",
+    "land_id": "48dbc9df-49ed-48e3-a3ae-7b55a9ca95fc",
+    "farmer_id": "2d2e68a9-2e50-48e8-9adb-98f9274003cc",
+    "inspection_date": "2026-02-11",
+    "health_status": "mild_issue",
+    "productivity_status": "less_productive",
+    "issue_type": "pest",
+    "issue_description": "",
+    "recommendation": "",
+    "notes": "",
+    "created_date": "2026-02-11T06:27:41.529Z",
+    "sync_status": "pending"
+  },
+  {
+    "id": "648e5922-098a-4e14-93d2-e69d7082b2b6",
+    "plant_id": "2429e173-bad1-4069-967e-d6c98aa32e92",
+    "land_id": "48dbc9df-49ed-48e3-a3ae-7b55a9ca95fc",
+    "farmer_id": "2d2e68a9-2e50-48e8-9adb-98f9274003cc",
+    "inspection_date": "2026-02-16",
+    "health_status": "healthy",
+    "productivity_status": "productive",
+    "issue_type": "none",
+    "issue_description": "",
+    "recommendation": "",
+    "notes": "",
+    "created_date": "2026-02-16T08:43:53.944Z",
+    "sync_status": "pending"
+  },
+  {
+    "id": "f815b0bb-3619-4be7-a147-bd24f5851929",
+    "plant_id": "68c394b6-ef2d-4933-b957-c8ac1b906939",
+    "land_id": "6135afd9-8d0a-4e60-9aa4-ef5f6e95f59f",
+    "farmer_id": "2d2e68a9-2e50-48e8-9adb-98f9274003cc",
+    "inspection_date": "2026-02-18",
+    "health_status": "moderate_issue",
+    "productivity_status": "less_productive",
+    "issue_type": "disease",
+    "issue_description": "penyakit membuaat daun menguning",
+    "recommendation": "Pemupukan menggunakan pupuk Kandang",
+    "notes": "",
+    "created_date": "2026-02-18T08:19:46.852Z",
+    "sync_status": "pending"
+  }
+]

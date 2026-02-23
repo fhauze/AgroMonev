@@ -1,0 +1,110 @@
+{
+  "name": "Distribution",
+  "type": "object",
+  "properties": {
+    "harvest_id": {
+      "type": "string",
+      "description": "ID hasil panen"
+    },
+    "farmer_id": {
+      "type": "string",
+      "description": "ID petani pengirim"
+    },
+    "farmer_name": {
+      "type": "string",
+      "description": "Nama petani"
+    },
+    "offtaker_id": {
+      "type": "string",
+      "description": "ID offtaker tujuan"
+    },
+    "offtaker_name": {
+      "type": "string",
+      "description": "Nama offtaker"
+    },
+    "commodity_name": {
+      "type": "string",
+      "description": "Nama komoditas"
+    },
+    "quantity_kg": {
+      "type": "number",
+      "description": "Jumlah dalam kg"
+    },
+    "farmer_grade": {
+      "type": "string",
+      "enum": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "description": "Grade yang diklaim petani"
+    },
+    "offtaker_grade": {
+      "type": "string",
+      "enum": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "rejected"
+      ],
+      "description": "Grade final dari offtaker"
+    },
+    "grade_difference_reason": {
+      "type": "string",
+      "description": "Alasan jika grade diturunkan"
+    },
+    "distribution_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Tanggal pengiriman"
+    },
+    "received_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Tanggal diterima offtaker"
+    },
+    "price_per_kg": {
+      "type": "number",
+      "description": "Harga per kg berdasarkan grade final"
+    },
+    "total_value": {
+      "type": "number",
+      "description": "Total nilai transaksi"
+    },
+    "photo_url": {
+      "type": "string",
+      "description": "Foto barang saat dikirim"
+    },
+    "received_photo_url": {
+      "type": "string",
+      "description": "Foto barang saat diterima"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Catatan pengiriman"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "in_transit",
+        "received",
+        "graded",
+        "completed",
+        "rejected"
+      ],
+      "default": "pending",
+      "description": "Status distribusi"
+    }
+  },
+  "required": [
+    "farmer_id",
+    "offtaker_id",
+    "commodity_name",
+    "quantity_kg",
+    "farmer_grade",
+    "distribution_date"
+  ]
+}

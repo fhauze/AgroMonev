@@ -1,0 +1,98 @@
+{
+  "name": "Harvest",
+  "type": "object",
+  "properties": {
+    "plant_id": {
+      "type": "string",
+      "description": "ID tanaman yang dipanen"
+    },
+    "land_id": {
+      "type": "string",
+      "description": "ID lahan"
+    },
+    "farmer_id": {
+      "type": "string",
+      "description": "ID petani"
+    },
+    "commodity_name": {
+      "type": "string",
+      "description": "Nama komoditas"
+    },
+    "harvest_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Tanggal panen"
+    },
+    "quantity_kg": {
+      "type": "number",
+      "description": "Jumlah hasil panen dalam kg"
+    },
+    "grade": {
+      "type": "string",
+      "enum": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "rejected"
+      ],
+      "description": "Grade kualitas hasil panen"
+    },
+    "grade_notes": {
+      "type": "string",
+      "description": "Catatan grading"
+    },
+    "graded_by": {
+      "type": "string",
+      "description": "Email offtaker yang melakukan grading"
+    },
+    "graded_by_name": {
+      "type": "string",
+      "description": "Nama offtaker"
+    },
+    "graded_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Waktu grading dilakukan"
+    },
+    "price_per_kg": {
+      "type": "number",
+      "description": "Harga per kg berdasarkan grade"
+    },
+    "total_value": {
+      "type": "number",
+      "description": "Total nilai hasil panen"
+    },
+    "photo_url": {
+      "type": "string",
+      "description": "Foto hasil panen"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending_grade",
+        "graded",
+        "sold",
+        "rejected"
+      ],
+      "default": "pending_grade",
+      "description": "Status hasil panen"
+    },
+    "sync_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "synced",
+        "failed"
+      ],
+      "default": "pending"
+    }
+  },
+  "required": [
+    "land_id",
+    "farmer_id",
+    "commodity_name",
+    "harvest_date",
+    "quantity_kg"
+  ]
+}

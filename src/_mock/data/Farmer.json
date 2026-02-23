@@ -1,0 +1,31 @@
+[
+  {
+    "id": "2d2e68a9-2e50-48e8-9adb-98f9274003cc",
+    "nik": "1234567891011",
+    "full_name": "fhauz",
+    "phone": "242342",
+    "farmer_group": "Kelompok Sejahtera",
+    "village": "Citatah",
+    "district": "Cipatat",
+    "regency": "Bandung Barat",
+    "province": "Jawa Barat",
+    "verification_status": "verified",
+    "sync_status": "pending",
+    "created_date": "2026-02-10T09:23:34.002Z",
+    "updated_date": "2026-02-12T04:13:30.018Z"
+  },
+  {
+    "id": "5a1da6a5-e089-4cf0-9a5b-83f63fd977b6",
+    "nik": "23123123131123",
+    "full_name": "Esporte",
+    "phone": "242342",
+    "farmer_group": "",
+    "village": "Kampoeng",
+    "district": "Kapuas Hulu",
+    "regency": "Kapuas",
+    "province": "Kalimantan Barat",
+    "verification_status": "pending",
+    "sync_status": "pending",
+    "created_date": "2026-02-16T05:01:45.468Z"
+  }
+]

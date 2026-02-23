@@ -1,0 +1,386 @@
+[
+  {
+    "id": "48dbc9df-49ed-48e3-a3ae-7b55a9ca95fc",
+    "farmer_id": "2d2e68a9-2e50-48e8-9adb-98f9274003cc",
+    "name": "Lahan Baru",
+    "land_status": "owned",
+    "village": "Citatah",
+    "district": "Cipatat",
+    "regency": "Bandung Barat",
+    "polygon_coordinates": [
+      [
+        106.76148,
+        -6.266525
+      ],
+      [
+        106.764335,
+        -6.266525
+      ],
+      [
+        106.764335,
+        -6.26938
+      ],
+      [
+        106.76148,
+        -6.26938
+      ],
+      [
+        106.76148,
+        -6.266525
+      ]
+    ],
+    "center_lat": -6.267952784077087,
+    "center_lng": 106.76290776910842,
+    "area_hectares": 10,
+    "validation_status": "valid",
+    "sync_status": "pending",
+    "created_date": "2026-02-11T03:28:54.237Z",
+    "updated_date": "2026-02-12T06:14:12.061Z"
+  },
+  {
+    "id": "28d50433-b1dc-46ef-b572-eb081ca28d72",
+    "farmer_id": "2d2e68a9-2e50-48e8-9adb-98f9274003cc",
+    "name": "Lahan 2 - 10Ha",
+    "land_status": "owned",
+    "village": "BJB",
+    "district": "BJB",
+    "regency": "BJB",
+    "polygon_coordinates": [
+      [
+        106.761489,
+        -6.266527
+      ],
+      [
+        106.764344,
+        -6.266527
+      ],
+      [
+        106.764344,
+        -6.269382
+      ],
+      [
+        106.761489,
+        -6.269382
+      ],
+      [
+        106.761489,
+        -6.266527
+      ]
+    ],
+    "center_lat": -6.267954514680751,
+    "center_lng": 106.76291647568742,
+    "area_hectares": 10,
+    "validation_status": "valid",
+    "sync_status": "pending",
+    "created_date": "2026-02-11T04:52:54.541Z",
+    "validation_notes": "",
+    "updated_date": "2026-02-11T04:54:45.592Z"
+  },
+  {
+    "id": "6135afd9-8d0a-4e60-9aa4-ef5f6e95f59f",
+    "farmer_id": "2d2e68a9-2e50-48e8-9adb-98f9274003cc",
+    "name": "Kebun Kopi",
+    "land_status": "owned",
+    "village": "Suka Maju",
+    "district": "Suka Muliya",
+    "regency": "Suka Jadi",
+    "polygon_coordinates": [
+      [
+        106.76286,
+        -6.26793
+      ],
+      [
+        106.76293,
+        -6.26792
+      ],
+      [
+        106.76298,
+        -6.26797
+      ],
+      [
+        106.76295,
+        -6.26803
+      ],
+      [
+        106.76288,
+        -6.26804
+      ],
+      [
+        106.76284,
+        -6.26799
+      ]
+    ],
+    "center_lat": -6.26798,
+    "center_lng": 106.76291,
+    "area_hectares": 0.01,
+    "validation_status": "valid",
+    "sync_status": "pending",
+    "created_date": "2026-02-11T10:17:42.476Z",
+    "updated_date": "2026-02-12T03:12:54.030Z"
+  },
+  {
+    "id": "75ba78c9-20b3-4d06-b372-02244648b8f1",
+    "farmer_id": "5a1da6a5-e089-4cf0-9a5b-83f63fd977b6",
+    "name": "Lahan Utama",
+    "land_status": "owned",
+    "village": "Desa 1",
+    "district": "Kecamatan 1",
+    "regency": "Kabupaten 1",
+    "polygon_coordinates": [
+      [
+        106.7631392,
+        -6.2680767
+      ],
+      [
+        106.7631392,
+        -6.2680767
+      ],
+      [
+        106.7631392,
+        -6.2680767
+      ],
+      [
+        106.7631392,
+        -6.2680767
+      ]
+    ],
+    "center_lat": -6.2680767,
+    "center_lng": 106.7631392,
+    "area_hectares": 0,
+    "validation_status": "pending",
+    "sync_status": "pending",
+    "created_date": "2026-02-19T03:32:41.974Z"
+  },
+  {
+    "id": "7f1ade7d-b2c1-4627-9ef0-1d994ac87c0f",
+    "name": "Kebun Kedua",
+    "land_status": "owned",
+    "village": "Desa 2",
+    "district": "Kecamatan 2",
+    "regency": "Kab 2",
+    "polygon_coordinates": [
+      [
+        106.7631507,
+        -6.2680788
+      ],
+      [
+        106.7631507,
+        -6.2680788
+      ],
+      [
+        106.7631507,
+        -6.2680788
+      ]
+    ],
+    "center_lat": -6.2680788000000005,
+    "center_lng": 106.7631507,
+    "area_hectares": 0,
+    "farmer_id": "2d2e68a9-2e50-48e8-9adb-98f9274003cc",
+    "validation_status": "pending",
+    "sync_status": "pending",
+    "created_date": "2026-02-19T06:47:36.906Z"
+  },
+  {
+    "id": "5ab4a5f6-7c25-4389-9a9f-001d4e78624e",
+    "name": "dada",
+    "land_status": "owned",
+    "village": "dsadssa",
+    "district": "ada",
+    "regency": "dasad",
+    "polygon_coordinates": [
+      [
+        106.7631451,
+        -6.2680689
+      ],
+      [
+        106.7631451,
+        -6.2680689
+      ],
+      [
+        106.7631451,
+        -6.2680689
+      ]
+    ],
+    "center_lat": -6.2680689,
+    "center_lng": 106.76314510000002,
+    "area_hectares": 0,
+    "farmer_id": "2d2e68a9-2e50-48e8-9adb-98f9274003cc",
+    "validation_status": "pending",
+    "sync_status": "pending",
+    "created_date": "2026-02-19T07:21:25.330Z"
+  },
+  {
+    "id": "8a6c4832-80e0-490e-b9d6-562b49eee919",
+    "name": "Contoh 2",
+    "land_status": "owned",
+    "village": "contoh",
+    "district": "contoh",
+    "regency": "contoh",
+    "polygon_coordinates": [
+      [
+        106.7787678,
+        -6.2741299
+      ],
+      [
+        106.7787678,
+        -6.2741299
+      ],
+      [
+        106.7787678,
+        -6.2741299
+      ]
+    ],
+    "center_lat": -6.274129900000001,
+    "center_lng": 106.77876780000001,
+    "area_hectares": 0,
+    "farmer_id": "2d2e68a9-2e50-48e8-9adb-98f9274003cc",
+    "validation_status": "pending",
+    "sync_status": "pending",
+    "created_date": "2026-02-19T09:05:47.746Z"
+  },
+  {
+    "id": "a740f294-be61-42ad-9a37-5a6d4c51aa92",
+    "name": "Contoh 2",
+    "land_status": "owned",
+    "village": "contoh",
+    "district": "contoh",
+    "regency": "contoh",
+    "polygon_coordinates": [
+      [
+        106.7787678,
+        -6.2741299
+      ],
+      [
+        106.7787678,
+        -6.2741299
+      ],
+      [
+        106.7787678,
+        -6.2741299
+      ]
+    ],
+    "center_lat": -6.274129900000001,
+    "center_lng": 106.77876780000001,
+    "area_hectares": 0,
+    "farmer_id": "2d2e68a9-2e50-48e8-9adb-98f9274003cc",
+    "validation_status": "pending",
+    "sync_status": "pending",
+    "created_date": "2026-02-19T09:06:16.873Z"
+  },
+  {
+    "id": "124322d3-3138-4b39-84c3-d122e1991306",
+    "name": "Contoh 2",
+    "land_status": "owned",
+    "village": "contoh",
+    "district": "contoh",
+    "regency": "contoh",
+    "polygon_coordinates": [
+      [
+        106.7787678,
+        -6.2741299
+      ],
+      [
+        106.7787678,
+        -6.2741299
+      ],
+      [
+        106.7787678,
+        -6.2741299
+      ]
+    ],
+    "center_lat": -6.274129900000001,
+    "center_lng": 106.77876780000001,
+    "area_hectares": 0,
+    "farmer_id": "2d2e68a9-2e50-48e8-9adb-98f9274003cc",
+    "validation_status": "pending",
+    "sync_status": "pending",
+    "created_date": "2026-02-19T09:07:32.768Z"
+  },
+  {
+    "id": "856123a8-9c5a-4b74-905a-8b4a64ea5801",
+    "name": "dsada",
+    "land_status": "rented",
+    "village": "adsad",
+    "district": "dasdas",
+    "regency": "dsadsas",
+    "polygon_coordinates": [
+      [
+        106.76179504039773,
+        -6.2648040380825165
+      ],
+      [
+        106.76179504039773,
+        -6.2648040380825165
+      ],
+      [
+        106.76179504039773,
+        -6.2648040380825165
+      ]
+    ],
+    "center_lat": -6.2648040380825165,
+    "center_lng": 106.76179504039773,
+    "area_hectares": 0,
+    "farmer_id": "2d2e68a9-2e50-48e8-9adb-98f9274003cc",
+    "validation_status": "pending",
+    "sync_status": "pending",
+    "created_date": "2026-02-20T13:18:10.238Z"
+  },
+  {
+    "id": "77dbe826-feae-46fd-ae61-4ec1cd08f3eb",
+    "name": "dsada",
+    "land_status": "rented",
+    "village": "adsad",
+    "district": "dasdas",
+    "regency": "dsadsas",
+    "polygon_coordinates": [
+      [
+        106.76179504039773,
+        -6.2648040380825165
+      ],
+      [
+        106.76179504039773,
+        -6.2648040380825165
+      ],
+      [
+        106.76179504039773,
+        -6.2648040380825165
+      ]
+    ],
+    "center_lat": -6.2648040380825165,
+    "center_lng": 106.76179504039773,
+    "area_hectares": 0,
+    "farmer_id": "2d2e68a9-2e50-48e8-9adb-98f9274003cc",
+    "validation_status": "pending",
+    "sync_status": "pending",
+    "created_date": "2026-02-20T13:20:08.850Z"
+  },
+  {
+    "id": "08b6d3fb-6202-48fb-ad85-625210886961",
+    "farmer_id": "5a1da6a5-e089-4cf0-9a5b-83f63fd977b6",
+    "name": "contoh 2",
+    "land_status": "owned",
+    "village": "desa2",
+    "district": "kecamatan2",
+    "regency": "kab2",
+    "polygon_coordinates": [
+      [
+        106.76184396535947,
+        -6.264878877110345
+      ],
+      [
+        106.76184396535947,
+        -6.264878877110345
+      ],
+      [
+        106.76184396535947,
+        -6.264878877110345
+      ]
+    ],
+    "center_lat": -6.264878877110345,
+    "center_lng": 106.76184396535946,
+    "area_hectares": 0,
+    "validation_status": "pending",
+    "sync_status": "pending",
+    "created_date": "2026-02-22T18:17:05.741Z"
+  }
+]
