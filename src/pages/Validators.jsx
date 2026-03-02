@@ -39,11 +39,15 @@ export default function Validators() {
 
   const {data: provinces = []} = useQuery({
     queryKey: ["provinces"],
-    queryFn: () => {
+    queryFn: async () => {
       try{
-      const data = base44.entities.Province.list();
-      return Array.isArray(data) ? data : [];
+        const data = base44.entities.Province.list();
+        if (data && Array.isArray(data)) {
+          return data;
+        }
+        return [];
       }catch(e){
+        console.warn('gagal meemuat data dari server');
         return [];
       }
     }
@@ -73,12 +77,27 @@ export default function Validators() {
   }
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Validator.create(data),
+    mutationFn: async (data) => {
+      try{
+        const actServer = base44.entities.Validator.create(data);
+        if(typeof actServer === 'string' && actServer.includes('<!doctype html')){
+          throw new Error('Data is HTML file, not a good responds');
+        }
+        return actServer;
+      }catch(err){
+        throw {type: 'OFFLINE_SAVE', data}
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["validators"] });
       setShowForm(false);
       setFormData({ user_email: "", full_name: "", role: "kepala_desa", village: "", district: "", regency: "", phone: "", is_active: true });
       toast.success("Validator berhasil ditambahkan!");
+    },
+    onError: async (error, datas)=>{
+      if(error.type === 'OFFLINE_SAVE'){{
+        console.log('Error menyimpan online dan akan disimpan offline')
+      }}
     }
   });
 
@@ -187,7 +206,7 @@ export default function Validators() {
                 </div>
                 <div className="space-y-2">
                   <Label>Provinsi</Label>
-                  <Select value={formData.province} onValueChange={(v) => handleChange("province", v)}>
+                  <Select value={formData.province || ""} onValueChange={(v) => handleChange("province", v)}>
                     <SelectTrigger><SelectValue placeholder="Pilih provinsi" /></SelectTrigger>
                     <SelectContent>
                       {provinces.map(p => (<SelectItem key={p.id} value={p.id}>{p.nama}</SelectItem>))}

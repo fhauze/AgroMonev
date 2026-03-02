@@ -51,7 +51,7 @@ export default function ProductivityMonitoring() {
   // });
 
   const {data: rawLands = []} = useQuery({
-    queryKey: ['farmers'],
+    queryKey: ['lands'],
     queryFn: async () => {
       let dataServer = [];
       try{
@@ -59,7 +59,7 @@ export default function ProductivityMonitoring() {
         dataServer = Array.isArray(res) ? res : [];
         
       }catch(err){}
-        const localData = await OfflineService.getEntities('farmers');
+        const localData = await OfflineService.getEntities('lands');
         const combined = new Map();
         dataServer.forEach(d => combined.set(d.id, d));
         localData.array.forEach(f => combined.set(f.id, f));

@@ -63,14 +63,28 @@ export default function FarmerPortal() {
 
   // Load user and farmer data
   useEffect(() => {
-    getAllLand().then(console.log);
+    getAllLand().then(function(){
+      console.log("get all land")
+    });
     const loadData = async () => {
       try {
         const currentUser = await base44.auth.me();
         setUser(currentUser);
         
         // Find farmer linked to this user
-        const farmers = await base44.entities.Farmer.filter({ user_email: currentUser.email });
+        let farmers = [];
+        try{
+          const resp = await base44.entities.Farmer.filter({ user_email: currentUser.email });
+          if(typeof resp ==='string' && resp.includes('<!doctype html>')){
+            console.error('Server tidak ditemukan / sedang error')
+          }else
+          if(resp && !resp.error){
+            farmers = resp;
+          }
+        }catch(e){
+
+        }
+        
         if (farmers.length > 0) {
           setFarmer(farmers[0]);
         }
@@ -102,11 +116,7 @@ export default function FarmerPortal() {
     queryFn: () => landEntity.filter({ farmer_id: farmer.id }),
     // queryFn: async () => {
     //   console.log("📡 Mengambil data lahan untuk ID:", farmer.id);
-      
-    //   // Harus pakai AWAIT karena getAllLand adalah fungsi async (mengambil dari DB)
     //   const data = await getAllLand(farmer.id);
-      
-    //   console.log("📥 Data berhasil dimuat ke React Query:", data);
     //   return data; 
     // },
     enabled: !!farmer?.id
@@ -115,7 +125,16 @@ export default function FarmerPortal() {
   // Load farmer's plants with offline support
   const { data: plants = [] } = useQuery({
     queryKey: ["farmer-plants", farmer?.id],
-    queryFn: () => plantEntity.filter({ farmer_id: farmer.id }),
+    queryFn: async () => {
+      try {
+        const response = plantEntity.filter({ farmer_id: farmer.id });
+        if(response && !response.error){
+          return Array.isArray(response) ? response : [];
+        }
+      } catch (error) {
+        return [];
+      }
+    },
     enabled: !!farmer?.id
   });
 

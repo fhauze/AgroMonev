@@ -1,5 +1,6 @@
 import { initDB, persistDB } from '../../utils/sqlClient';
 import { db } from '../../utils/db';
+import { toArray } from 'lodash';
 
 export const isOnline = () => navigator.onLine;
 
@@ -16,9 +17,10 @@ export const OfflineService = {
     };
 
     try {
-      // Simpan objek JSON langsung ke IndexedDB
+      // update first
       await db[table].put(record);
-      // Tambahkan ke antrean sinkronisasi
+
+      // gonna insert
       await db.pending_sync.add({
         id: `q_${Date.now()}`,
         entity_type: entityType,
@@ -35,9 +37,8 @@ export const OfflineService = {
     }
   },
 
-  getEntities: async (entityType, filter = {}) => { // Tambahkan default value {}
+  getEntities: async (entityType, filter = {}) => {
     try {
-      // 1. Validasi Nama Tabel
       if (!entityType) return [];
       const table = entityType.toLowerCase().endsWith('s') 
         ? entityType.toLowerCase() 
@@ -49,14 +50,21 @@ export const OfflineService = {
         return [];
       }
 
-      // 2. Cek apakah ada filter yang valid
-      // Pastikan filter bukan null/undefined dan punya isi
+      const invalidData = await dbTable.filter(
+          item => !item.nik || item.nik === ''
+        ).toArray();
+
+      if(invalidData.length > 0){
+        const idsToDelete = invalidData.map(d => d.id);
+        await dbTable.bulkDelete(idsToDelete);
+        console.log(`🧹 Cleanup: Menghapus ${invalidData.length} data tanpa NIK dari ${table}`);
+      }
+      
       if (filter && typeof filter === 'object' && Object.keys(filter).length > 0) {
         console.log(`🔍 Fetching ${table} with filter:`, filter);
         return await dbTable.where(filter).toArray();
       }
-
-      // 3. Jika tidak ada filter, ambil semua (Urutkan terbaru)
+      
       console.log(`🔍 Fetching all from ${table}`);
       return await dbTable.reverse().toArray();
 
@@ -72,6 +80,31 @@ export const OfflineService = {
     } catch (e) {
       console.error("Gagal hitung antrean:", e);
       return 0;
+    }
+  },
+  deleteEntityLocally: async (entityType, id) => {
+    const table = entityType.toLowerCase().endsWith('s') 
+      ? entityType.toLowerCase() 
+      : `${entityType.toLowerCase()}s`;
+
+    try {
+      // 1. Hapus dari tabel utama di Dexie (Local)
+      await db[table].delete(id);
+
+      // 2. Tambahkan ke antrean sinkronisasi dengan operasi 'DELETE'
+      await db.pending_sync.add({
+        id: `q_${Date.now()}`,
+        entity_type: entityType,
+        operation: 'DELETE',
+        payload: { id }, // Kirim ID saja untuk dihapus di server nanti
+        created_at: new Date().toISOString()
+      });
+
+      console.log(`🗑️ Dexie: Data ${entityType} dengan ID ${id} berhasil dihapus lokal!`);
+      return true;
+    } catch (err) {
+      console.error("❌ Dexie Delete Error:", err);
+      throw err;
     }
   }
 };

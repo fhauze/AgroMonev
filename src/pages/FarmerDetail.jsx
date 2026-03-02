@@ -18,6 +18,7 @@ import LinkUserAccount from "@/components/farmers/LinkUserAccount";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { OfflineService } from "@/components/common/offlineStorage";
+import { useNavigate } from 'react-router-dom';
 
 export default function FarmerDetail() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -26,6 +27,7 @@ export default function FarmerDetail() {
   const {id: paramsId } = useParams();
   const id = paramsId || searchId;
   const [isEditing, setIsEditing] = useState(false);
+  const navigate = useNavigate();
 
   // const { data: farmer, isLoading } = useQuery({
   //   queryKey: ["farmer", farmerId],
@@ -137,10 +139,64 @@ export default function FarmerDetail() {
   const plants = Array.isArray(rawPlants) ? rawPlants : [];
 
   const verifyMutation = useMutation({
-    mutationFn: (status) => base44.entities.Farmer.update(id, { verification_status: status }),
+    mutationFn: async (status) => {
+      console.log("Data dari Verifikais :", [status, id])
+      try {
+        const onlineUpdate = await base44.entities.Farmer.update(id, { verification_status: status })
+        if(typeof onlineUpdate == 'string' && onlineUpdate.includes('<!doctype html>')){
+          throw Error("HTML respond found, it must be error")
+        }
+
+        return onlineUpdate;
+      } catch (error) {
+        throw {type: "OFFLINE_SAVE", status, id};
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["farmer", id] });
       toast.success("Status verifikasi diperbarui!");
+    },
+    onError: async (error, variables) => {
+      console.log(variables);
+      if(error.type == 'OFFLINE_SAVE'){
+        console.warn("Saving offline");
+        try {
+          const entity = 'farmer';
+          await OfflineService.saveEntityLocally(entity,{
+            ...variables,
+            id: variables.id,
+            verification_status: variables.status,
+          });
+          
+          queryClient.setQueryData(["farmers"], (oldData) => {
+            if (!Array.isArray(oldData)) return [];
+
+            return oldData.map(item => {
+              if (item.id === variables.id) {
+                return { 
+                  ...item, 
+                  verification_status: variables.status, 
+                  sync_status: 'pending' 
+                };
+              }
+              return item;
+            });
+          });
+          
+          queryClient.setQueryData(["farmer", variables.id], (oldData) => {
+            return oldData ? { ...oldData, verification_status: variables.status, sync_status: 'pending' } : oldData;
+          });
+
+          // toast.info("Tersimpan secara lokal");
+          // setTimeout(() => {
+          //   navigate(createPageUrl("Farmers"));
+          // }, 500);
+
+        } catch (sqlError) {
+          console.error("SQLite Error:", sqlError);
+          toast.error("Gagal simpan lokal");
+        }
+      }
     }
   });
 

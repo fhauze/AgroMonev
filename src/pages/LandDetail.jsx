@@ -100,7 +100,10 @@ export default function LandDetail() {
       let serverData = [];
       try {
         const serverData = await base44.entities.Land.get(id);
-        if (serverData && !serverData.error) return serverData;
+        if(typeof serverData == 'string' && serverData.includes('<!doctype html>')){
+          console.warn('data server tidak ditemukan');
+        }
+        else if (serverData && !serverData.error) return serverData;
       } catch (e) {
         console.warn("Server unreachable, searching locally...");
       }
@@ -111,10 +114,11 @@ export default function LandDetail() {
       }
       throw new Error("Lahan tidak ditemukan");
     },
-    enabled: !!id
+    enabled: !!id,
+    initialData: null
   });
 
-  
+  console.log('Land data =>', land)
   // const { data: farmers = [] } = useQuery({
   //   queryKey: ["farmers"],
   //   queryFn: () => base44.entities.Farmer.list()
@@ -133,7 +137,7 @@ export default function LandDetail() {
     },
     enabled: !!land?.farmer_id
   });
-
+  
   // const { data: farmer } = useQuery({
   //   queryKey: ["farmer", land?.farmer_id],
   //   queryFn: () => base44.entities.Farmer.filter({ id: land.farmer_id }).then(res => res[0]),
