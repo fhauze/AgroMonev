@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { MapContainer, TileLayer, Marker, Polygon, useMap } from "react-leaflet";
+import { useState, useEffect, useMemo } from "react";
+import { MapContainer, TileLayer, Marker, Polygon, useMap,Circle } from "react-leaflet";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { TreePine, Navigation, Loader2 } from "lucide-react";
+import { TreePine, Navigation, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -37,11 +37,31 @@ const commodities = [
   { name: "Sengon", category: "kehutanan" },
 ];
 
+/**
+ * Helper function: Ray-casting algorithm untuk mengecek apakah titik di dalam poligon
+ */
+const isPointInPolygon = (point, polygon) => {
+  if (!point || !polygon || polygon.length < 3) return true;
+  const x = point[0], y = point[1];
+  let inside = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const xi = polygon[i][0], yi = polygon[i][1];
+    const xj = polygon[j][0], yj = polygon[j][1];
+    const intersect = ((yi > y) !== (yj > y))
+        && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
+  }
+  return inside;
+};
+
 function MapController({ center }) {
   const map = useMap();
   useEffect(() => {
     if (center) {
-      map.flyTo(center, 19);
+      // map.flyTo(center, 19);
+      map.flyTo(center, 21, {
+        duration: 1.5
+      });
     }
   }, [center, map]);
   return null;
@@ -121,12 +141,46 @@ export default function GPSPlantTagger({
     return () => stopGPSTracking();
   }, []);
 
-  // Open tag dialog
+  // Memproses data polygon lahan
+  const polygonPositions = useMemo(() => {
+    if (!landPolygon) return [];
+    try {
+      const rawData = typeof landPolygon === 'string' 
+        ? JSON.parse(landPolygon) 
+        : landPolygon;
+      if (!Array.isArray(rawData)) return [];
+      return rawData.map(c => [
+        parseFloat(c[1]), 
+        parseFloat(c[0])
+      ]);
+    } catch (error) {
+      console.error("Gagal memproses landPolygon di Tagger:", error);
+      return [];
+    }
+  }, [landPolygon]);
+
+  // Validasi Real-time: Apakah user di dalam poligon?
+  const isInsideLahan = useMemo(() => {
+    if (!currentLocation || polygonPositions.length < 3) return true;
+    return isPointInPolygon(currentLocation, polygonPositions);
+  }, [currentLocation, polygonPositions]);
+
+  // Open tag dialog dengan Validasi
   const handleTagClick = () => {
-    if (!currentLocation) {
-      toast.error("Tunggu GPS menemukan lokasi Anda");
+    const MINIMUM_ACCURACY = 5;
+
+    if (gpsAccuracy > MINIMUM_ACCURACY) {
+      toast.warning(`Akurasi GPS kurang baik (±${gpsAccuracy.toFixed(0)}m)`, {
+        description: "Mohon tunggu sebentar atau bergerak ke area terbuka hingga akurasi di bawah 5m."
+      });
       return;
     }
+    
+    if (!isInsideLahan) {
+      toast.error("Posisi di luar lahan!");
+      return;
+    }
+
     setShowTagDialog(true);
   };
 
@@ -162,10 +216,10 @@ export default function GPSPlantTagger({
     html: `<div style="
       width: 24px; 
       height: 24px; 
-      background: #3b82f6; 
+      background: ${isInsideLahan ? '#3b82f6' : '#ef4444'}; 
       border-radius: 50%; 
       border: 4px solid white; 
-      box-shadow: 0 0 0 2px #3b82f6, 0 2px 8px rgba(0,0,0,0.3);
+      box-shadow: 0 0 0 2px ${isInsideLahan ? '#3b82f6' : '#ef4444'}, 0 2px 8px rgba(0,0,0,0.3);
       animation: pulse 2s infinite;
     "></div>`,
     iconSize: [24, 24],
@@ -189,9 +243,6 @@ export default function GPSPlantTagger({
     iconAnchor: [14, 14]
   });
 
-  // Convert polygon coordinates for display
-  const polygonPositions = landPolygon?.map(c => [c[1], c[0]]) || [];
-
   return (
     <>
       <Card className="border-0 shadow-sm overflow-hidden">
@@ -200,10 +251,14 @@ export default function GPSPlantTagger({
           {/* GPS Status */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className={`w-3 h-3 rounded-full ${currentLocation ? "bg-emerald-500 animate-pulse" : "bg-amber-500"}`} />
+              <div className={`w-3 h-3 rounded-full ${
+                !currentLocation ? "bg-amber-500" : (isInsideLahan ? "bg-emerald-500 animate-pulse" : "bg-red-500 animate-bounce")
+              }`} />
               <div>
                 <p className="text-sm font-medium text-slate-700">
-                  {isLocating ? "Mencari lokasi GPS..." : currentLocation ? "GPS Aktif" : "GPS Tidak Aktif"}
+                  {isLocating ? "Mencari lokasi GPS..." : 
+                   currentLocation ? (isInsideLahan ? "GPS Aktif (Di Dalam Lahan)" : "Posisi di Luar Batas Lahan!") : 
+                   "GPS Tidak Aktif"}
                 </p>
                 {gpsAccuracy && (
                   <p className="text-xs text-slate-500">Akurasi: ±{gpsAccuracy.toFixed(0)} meter</p>
@@ -219,14 +274,18 @@ export default function GPSPlantTagger({
           <Button
             onClick={handleTagClick}
             disabled={!currentLocation || isLoading}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 h-14 text-lg"
+            className={`w-full h-14 text-lg transition-all ${
+                isInsideLahan 
+                ? "bg-emerald-600 hover:bg-emerald-700" 
+                : "bg-slate-400 cursor-not-allowed grayscale"
+            }`}
           >
             {isLoading ? (
               <Loader2 className="w-6 h-6 mr-2 animate-spin" />
             ) : (
               <TreePine className="w-6 h-6 mr-2" />
             )}
-            Tag Tanaman di Lokasi Ini
+            {isInsideLahan ? "Tag Tanaman di Lokasi Ini" : "Lokasi di Luar Lahan"}
           </Button>
 
           {currentLocation && (
@@ -245,8 +304,8 @@ export default function GPSPlantTagger({
             scrollWheelZoom={true}
           >
             <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
             />
             
             {currentLocation && (
@@ -258,12 +317,24 @@ export default function GPSPlantTagger({
               <Polygon 
                 positions={polygonPositions} 
                 pathOptions={{ 
-                  color: "#16a34a", 
-                  fillColor: "#16a34a", 
-                  fillOpacity: 0.15,
+                  color: isInsideLahan ? "#16a34a" : "#ef4444", 
+                  fillColor: isInsideLahan ? "#16a34a" : "#ef4444", 
+                  fillOpacity: isInsideLahan ? 0.15 : 0.3,
                   weight: 2,
-                  dashArray: "5, 5"
+                  dashArray: isInsideLahan ? "5, 5" : "0"
                 }} 
+              />
+            )}
+
+            {currentLocation && (
+              <Circle
+                center={currentLocation}
+                radius={gpsAccuracy} // Lingkaran ini akan mengecil seiring GPS semakin akurat
+                pathOptions={{ 
+                  fillColor: isInsideLahan ? '#3b82f6' : '#ef4444', 
+                  color: 'transparent',
+                  fillOpacity: 0.2 
+                }}
               />
             )}
 
@@ -285,8 +356,14 @@ export default function GPSPlantTagger({
           {/* Instructions */}
           <div className="absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur rounded-xl p-3 shadow-lg z-[1000]">
             <p className="text-sm text-slate-700 text-center">
-              <span className="font-semibold">Petunjuk:</span> Berdiri di dekat tanaman, lalu tekan tombol 
-              <span className="font-semibold text-emerald-600"> "Tag Tanaman"</span> untuk menandai posisi.
+              {!isInsideLahan ? (
+                <span className="font-semibold text-red-600">Peringatan: Posisi Anda di luar batas hijau. Masuk ke area lahan untuk menandai.</span>
+              ) : (
+                <>
+                  <span className="font-semibold">Petunjuk:</span> Berdiri di dekat tanaman, lalu tekan tombol 
+                  <span className="font-semibold text-emerald-600"> "Tag Tanaman"</span> untuk menandai posisi.
+                </>
+              )}
             </p>
           </div>
         </div>

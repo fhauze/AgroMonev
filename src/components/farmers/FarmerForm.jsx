@@ -5,7 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, MapPin, Phone, Users, Loader2 } from "lucide-react";
-import { base44 } from "@/api/Client";
+import  base44  from "@/api/Client";
+import { entity } from "@/api/entities";
 import { useQuery } from "@tanstack/react-query";
 
 // const provinces = [
@@ -29,7 +30,10 @@ export default function FarmerForm({ initialData, onSubmit, isLoading }) {
 
   const { data: rawProvinces } = useQuery({
     queryKey: ['provinces'],
-    queryFn: () => base44.entities.Province.list(),
+    queryFn: async() => {
+      const resp = await entity("Province").list()
+      return resp ?? []
+    },
   });
 
   // const {data: provinces = []} = useQuery({

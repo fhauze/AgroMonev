@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { base44 } from "@/api/Client";
+import  base44  from "@/api/Client";
+import { entity } from "@/api/entities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +13,7 @@ export default function LinkUserAccount({ farmerId, onLinked }) {
 
   const linkMutation = useMutation({
     mutationFn: async (userEmail) => {
-      await base44.entities.Farmer.update(farmerId, { 
+      await entity("farmer").update(farmerId, { 
         user_email: userEmail 
       });
     },

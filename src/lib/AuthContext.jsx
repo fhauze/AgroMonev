@@ -1,146 +1,97 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { base44 } from '@/api/Client';
-import { appParams } from '@/lib/app-params';
-import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
+import axios from 'axios';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
+  const [token, setToken] = useState(
+    () => localStorage.getItem('access_token')
+  );
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
-  const [isLoadingPublicSettings, setIsLoadingPublicSettings] = useState(true);
   const [authError, setAuthError] = useState(null);
-  const [appPublicSettings, setAppPublicSettings] = useState(null);
+
+  const getBaseUrl = () => {
+    let url = import.meta.env.VITE_BASE44_API_URL || '';
+    return url.replace(/\/+$/, "").replace(/\/api$/, "");
+  };
 
   useEffect(() => {
-    checkAppState();
+    checkInitialState();
   }, []);
 
-  const checkAppState = async () => {
+  const checkInitialState = async () => {
     try {
-      setIsLoadingPublicSettings(true);
-      setAuthError(null);
+      setIsLoadingAuth(true);
+      const localToken = localStorage.getItem('access_token');
+      const localUser = localStorage.getItem('user_data');
       
-      // First, check app public settings (with token if available)
-      // This will tell us if auth is required, user not registered, etc.
-      const appClient = createAxiosClient({
-        // baseURL: `/api/apps/public`,
-        baseURL: `${import.meta.env.VITE_BASE44_API_URL}/api/apps/public`,
-        headers: {
-          'X-App-Id': appParams.appId
-        },
-        token: appParams.token, // Include token if available
-        interceptResponses: true
-      });
-      
-      try {
-        const publicSettings = await appClient.get(`/prod/public-settings/by-id/${appParams.appId}`);
-        
-        setAppPublicSettings(publicSettings);
-        
-        // If we got the app public settings successfully, check if user is authenticated
-        if (appParams.token) {
-          await checkUserAuth();
-        } else {
-          setIsLoadingAuth(false);
-          setIsAuthenticated(false);
-        }
-        setIsLoadingPublicSettings(false);
-      } catch (appError) {
-        console.error('App state check failed:', appError);
-        
-        // Handle app-level errors
-        if (appError.status === 403 && appError.data?.extra_data?.reason) {
-          const reason = appError.data.extra_data.reason;
-          if (reason === 'auth_required') {
-            setAuthError({
-              type: 'auth_required',
-              message: 'Authentication required'
-            });
-          } else if (reason === 'user_not_registered') {
-            setAuthError({
-              type: 'user_not_registered',
-              message: 'User not registered for this app'
-            });
-          } else {
-            setAuthError({
-              type: reason,
-              message: appError.message
-            });
-          }
-        } else {
-          setAuthError({
-            type: 'unknown',
-            message: appError.message || 'Failed to load app'
+      if (localToken && localUser) {
+        setUser(JSON.parse(localUser));
+        setIsAuthenticated(true);
+      }
+
+      if (navigator.onLine && localToken) {
+        try {
+          const response = await axios.get(`${getBaseUrl()}/api/auth/me`, {
+            headers: { Authorization: `Bearer ${localToken}` }
           });
+
+          const freshUser = response.data;
+          setUser(freshUser);
+          localStorage.setItem('user_data', JSON.stringify(freshUser));
+        } catch (e) {
+          if (e.response?.status === 401) {
+            logout(false);
+          }
         }
-        setIsLoadingPublicSettings(false);
-        setIsLoadingAuth(false);
       }
     } catch (error) {
-      console.error('Unexpected error:', error);
-      setAuthError({
-        type: 'unknown',
-        message: error.message || 'An unexpected error occurred'
-      });
-      setIsLoadingPublicSettings(false);
+      console.error("Auth check error:", error);
+    } finally {
       setIsLoadingAuth(false);
     }
   };
 
-  const checkUserAuth = async () => {
+  const login = async (email, password) => {
     try {
-      // Now check if the user is authenticated
       setIsLoadingAuth(true);
-      const currentUser = await base44.auth.me();
-      setUser(currentUser);
+      const response = await axios.post(`${getBaseUrl()}/api/auth/login`, {
+        email,
+        password
+      });
+
+      const { access_token, user: userData } = response.data;
+
+      localStorage.setItem('access_token', access_token);
+      localStorage.setItem('user_data', JSON.stringify(userData));
+
+      setUser(userData);
       setIsAuthenticated(true);
-      setIsLoadingAuth(false);
+      return { success: true };
     } catch (error) {
-      console.error('User auth check failed:', error);
+      return { 
+        success: false, 
+        message: error.response?.data?.message || 'Login gagal. Cek koneksi Anda.' 
+      };
+    } finally {
       setIsLoadingAuth(false);
-      setIsAuthenticated(false);
-      
-      // If user auth fails, it might be an expired token
-      if (error.status === 401 || error.status === 403) {
-        setAuthError({
-          type: 'auth_required',
-          message: 'Authentication required'
-        });
-      }
     }
   };
 
   const logout = (shouldRedirect = true) => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('user_data');
     setUser(null);
     setIsAuthenticated(false);
-    
-    if (shouldRedirect) {
-      // Use the SDK's logout method which handles token cleanup and redirect
-      base44.auth.logout(window.location.href);
-    } else {
-      // Just remove the token without redirect
-      base44.auth.logout();
-    }
-  };
-
-  const navigateToLogin = () => {
-    // Use the SDK's redirectToLogin method
-    base44.auth.redirectToLogin(window.location.href);
+    if (shouldRedirect) window.location.href = '/login';
   };
 
   return (
     <AuthContext.Provider value={{ 
-      user, 
-      isAuthenticated, 
-      isLoadingAuth,
-      isLoadingPublicSettings,
-      authError,
-      appPublicSettings,
-      logout,
-      navigateToLogin,
-      checkAppState
+      token, user, isAuthenticated, isLoadingAuth, authError, 
+      login, logout, checkAppState: checkInitialState 
     }}>
       {children}
     </AuthContext.Provider>
@@ -149,8 +100,6 @@ export const AuthProvider = ({ children }) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 };

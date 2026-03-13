@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/Client";
+import  base44  from "@/api/Client";
+import { entity } from "@/api/entities";
 import StatCard from "@/components/dashboard/StatCard";
 import RegionChart from "@/components/dashboard/RegionChart";
 import CommodityPieChart from "@/components/dashboard/CommodityPieChart";
@@ -16,22 +17,28 @@ export default function Dashboard() {
     less_productive: { label: "Kurang Produktif", color: "bg-amber-100 text-amber-700" },
     not_productive: { label: "Tidak Produktif", color: "bg-red-100 text-red-700" }
   };
+  const tok = localStorage.getItem('access_token');
+  const us = localStorage.getItem('user_data');
 
+  console.log('user data dan token ', tok,us)
   const { data: rawfarmers = [] } = useQuery({
     queryKey: ["farmers"],
-    queryFn: () => base44.entities.Farmer.list(),
+    queryFn: async () => {
+      const res = await entity('map','tanaman').list();
+      return res.data;
+    },
     retry: false
   });
 
   const { data: rawlands = [] } = useQuery({
     queryKey: ["lands"],
-    queryFn: () => base44.entities.Land.list(),
+    queryFn: () => [],
     retry: false
   });
 
   const { data: rawplants = [] } = useQuery({
     queryKey: ["plants"],
-    queryFn: () => base44.entities.Plant.list(),
+    queryFn: () => [],
     retry: false
   });
 

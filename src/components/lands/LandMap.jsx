@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -311,6 +311,7 @@ export default function LandMap({
           center={center}
           zoom={zoom}
           maxZoom={22}
+          maxNativeZoom={19}
           className="h-full w-full"
         >
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" 
@@ -331,20 +332,23 @@ export default function LandMap({
 
           {/* Existing Lands */}
           {lands.map((land) => {
-            if (!land.polygon_coordinates) return null;
+            if (!land.path) return null;
+
+            let pathArray;
+            try{
+              pathArray = typeof land.path === 'string' ? JSON.parse(land.path) : land.path
+            }catch (e) {
+              console.error("Format path tidak valid untuk lahan:", land.id);
+              return null;
+            }
+            if (!Array.isArray(pathArray) || pathArray.length === 0) return null;
 
             const cleaned =
-              land.polygon_coordinates.length > 1 &&
-              land.polygon_coordinates[0][0] ===
-                land.polygon_coordinates[
-                  land.polygon_coordinates.length - 1
-                ][0] &&
-              land.polygon_coordinates[0][1] ===
-                land.polygon_coordinates[
-                  land.polygon_coordinates.length - 1
-                ][1]
-                ? land.polygon_coordinates.slice(0, -1)
-                : land.polygon_coordinates;
+              pathArray.length > 1 &&
+              pathArray[0][0] === pathArray[pathArray.length - 1][0] &&
+              pathArray[0][1] === pathArray[pathArray.length - 1][1]
+                ? pathArray.slice(0, -1)
+                : pathArray;
 
             const polygonLatLng = cleaned.map((c) => [
               c[1],
@@ -352,7 +356,7 @@ export default function LandMap({
             ]);
 
             return (
-              <>
+              <Fragment key={`land-group-${land.id}`}>
                 <Polygon
                   key={land.id}
                   positions={polygonLatLng}
@@ -381,7 +385,7 @@ export default function LandMap({
                     icon={createCornerIcon(getLabel(i))}
                   />
                 ))}
-              </>
+              </Fragment>
             );
           })}
 

@@ -85,4 +85,20 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  html {
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+}
+
+@layer utilities {
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .mt-safe {
+    margin-top: env(safe-area-inset-top);
+  }
+  .top-safe {
+    top: env(safe-area-inset-top);
+  }
 }

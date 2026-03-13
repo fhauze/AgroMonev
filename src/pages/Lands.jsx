@@ -1,7 +1,8 @@
   import { useMemo, useState } from "react";
   import { useQuery } from "@tanstack/react-query";
-  import { base44 } from "@/api/Client";
+  import  base44  from "@/api/Client";
   import { Link } from "react-router-dom";
+  import { entity } from "@/api/entities";
   import { createPageUrl } from "@/utils";
   import LandCard from "@/components/lands/LandCard";
   import LandMap from "@/components/lands/LandMap";
@@ -29,19 +30,17 @@ import { OfflineService } from "@/components/common/offlineStorage";
         let serverData = [];
         try {
           // Tambahkan timeout atau handle jika return HTML
-          const resp = await base44.entities.Land.list("-created_date");
+          const resp = await entity("map","lahan").list();
+          console.log(resp)
           if (Array.isArray(resp)) serverData = resp;
         } catch (e) { 
           console.warn("Server lands offline/error"); 
         }
 
         const localData = await OfflineService.getEntities("lands");
-        
-        // Gabungkan dengan cerdas
+        console.log(localData)
         const combined = new Map();
-        // Masukkan data server dulu
         serverData.forEach(l => { if(l.id) combined.set(l.id, l); });
-        // Masukkan data lokal (akan menimpa data server jika ID sama, bagus untuk sinkronisasi)
         localData.forEach(l => { if(l.id) combined.set(l.id, l); });
 
         const result = Array.from(combined.values());

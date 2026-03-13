@@ -3,7 +3,6 @@ import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import { fileURLToPath } from 'url';
 import path from 'path';            
-import { mockApi } from './src/_mock/api';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,15 +19,15 @@ export default defineConfig({
       hmrNotifier: true,
       navigationNotifier: true,
       visualEditAgent: true,
-      // localBackend: true,
+      localBackend: true,
     }),
     react(),
-    {
-      name: 'local-mock-api',
-      configureServer(server) {
-        mockApi(server);
-      }
-    }
+    // {
+    //   name: 'local-mock-api',
+    //   configureServer(server) {
+    //     mockApi(server);
+    //   }
+    // }
   ],
   resolve: {
     alias: {
@@ -41,8 +40,11 @@ export default defineConfig({
     open: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:5173',
+        // target: 'http://localhost:5173',
+        target: 'https://agro.pkc-dev.org',
         changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/api/, '/api')
       },
     },
   },

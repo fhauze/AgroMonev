@@ -1,6 +1,6 @@
 import { useState,useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/Client";
+import  base44  from "@/api/Client";
 import { Link, useParams } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import LandMap from "@/components/lands/LandMap";
@@ -21,6 +21,7 @@ import {
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { OfflineService } from "@/components/common/offlineStorage";
+import { entity } from "@/api/entities";
 
 const validationColors = {
   valid: { bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-700", icon: CheckCircle },
@@ -52,16 +53,33 @@ export default function LandDetail() {
   const [showPlantTagger, setShowPlantTagger] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
-  // another way
   const {id: paramsId } = useParams();
 
   const id = paramsId || searchId;
 
-  /* Edit Function */
   const [formData, setFormData] = useState(null);
   const handleChange = (field, value) => {
       setFormData(prev => ({ ...prev, [field]: value }));
   };
+
+  const {data: villages=[]} = useQuery({
+    queryKey: ['lahan'],
+    queryFn: async() =>{
+      let dataToReturn;
+
+        try{
+          const response = await entity('master', 'desa-kelurahan').list();
+          dataToReturn = Array.isArray(response?.data) ? response.data :
+                        Array.isArray(response?.data?.data) ? response.data.data : []
+
+          return dataToReturn;
+        }catch(err){
+          console.error(err)
+          return []
+        }
+    },
+    
+  });
 
   const handlePolygonSave = (polygonData) => {
     setFormData(prev => ({
@@ -88,26 +106,28 @@ export default function LandDetail() {
     }
   });
 
-  // const { data: lands = [], isLoading } = useQuery({
-  //   queryKey: ["lands"],
-  //   queryFn: () => base44.entities.Land.list(),
-  // });
-
   const { data: land = [], isLoading , isError} = useQuery({
     queryKey: ["land", id],
     queryFn: async () => {
-      // 1. Ambil data server
       let serverData = [];
       try {
-        const serverData = await base44.entities.Land.get(id);
+        const respon = await entity('map','lahan').findOne(id);
+        const found = respon.data || respon;
+        
+        if (respon && !respon.error && typeof respon !== 'string') {
+          if (found) return {
+            ...found,
+            path: typeof found.path === 'string' ? JSON.parse(found.path) : found.path
+          };
+        }
+
         if(typeof serverData == 'string' && serverData.includes('<!doctype html>')){
           console.warn('data server tidak ditemukan');
-        }
-        else if (serverData && !serverData.error) return serverData;
+        } else if (serverData && !serverData.error) return serverData;
       } catch (e) {
         console.warn("Server unreachable, searching locally...");
       }
-
+      
       const localData = await OfflineService.getEntities("lands", { id: id });
       if (localData && localData.length > 0) {
         return { ...localData[0], isOffline: true };
@@ -118,18 +138,12 @@ export default function LandDetail() {
     initialData: null
   });
 
-  console.log('Land data =>', land)
-  // const { data: farmers = [] } = useQuery({
-  //   queryKey: ["farmers"],
-  //   queryFn: () => base44.entities.Farmer.list()
-  // });
-
   const { data: farmer } = useQuery({
     queryKey: ["farmer", land?.farmer_id],
     queryFn: async () => {
       if (!land?.farmer_id) return null;
       try {
-        return await base44.entities.Farmer.get(land.farmer_id);
+        return await entity('map','petani').get(land.farmer_id);
       } catch (e) {
         const localFarmer = await OfflineService.getEntities("farmers", { id: land.farmer_id });
         return localFarmer[0] || null;
@@ -137,45 +151,22 @@ export default function LandDetail() {
     },
     enabled: !!land?.farmer_id
   });
-  
-  // const { data: farmer } = useQuery({
-  //   queryKey: ["farmer", land?.farmer_id],
-  //   queryFn: () => base44.entities.Farmer.filter({ id: land.farmer_id }).then(res => res[0]),
-  //   enabled: !!land?.farmer_id
-  // });
-
-  // const { data: plants = [] } = useQuery({
-  //   queryKey: ["plants", landId],
-  //   queryFn: () => base44.entities.Plant.filter({ land_id: landId }),
-  //   enabled: !!landId
-  // });
-
-  // const { data: plantsRaw = [] } = useQuery({
-  //   queryKey: ["plants"],
-  //   queryFn: () => base44.entities.Plant.list(), // atau ambil semua
-  // });
-
-  // const { data: rawPlants = [] } = useQuery({
-  //   queryKey: ["plants", id],
-  //   queryFn: async () => {
-  //     try {
-  //       // Filter tanaman berdasarkan land_id
-  //       const resp = await base44.entities.Plant.list({ q: JSON.stringify({ land_id: id }) });
-  //       return Array.isArray(resp) ? resp : [];
-  //     } catch (e) {
-  //       return await OfflineService.getEntities("plants", { land_id: id });
-  //     }
-  //   }
-  // });
 
   const { data: plants = [] } = useQuery({
     queryKey: ["plants", id],
     queryFn: async () => {
       try {
-        const response = await base44.entities.Plant.list({ q: JSON.stringify({ land_id: id }) });
-        // VALIDASI: Paksa harus array
-        return Array.isArray(response) ? response : [];
+        const response = await entity('map', 'tanaman').list({ q: JSON.stringify({ land_id: id }) });
+        const rawTanaman = Array.isArray(response.data.data) ? response.data.data : [];
+        if(rawTanaman && rawTanaman.length > 0){
+          const retPlants = rawTanaman.filter((data) => data.lahan_id === land.id)
+          return rawTanaman.filter((data) => data.lahan_id === land.id)
+        }else{
+          console.log("tidak ada")
+        }
+        return [];
       } catch (e) {
+        console.error("Error :", e, land.id)
         const local = await OfflineService.getEntities("plants", { land_id: id });
         return Array.isArray(local) ? local : [];
       }
@@ -196,22 +187,13 @@ export default function LandDetail() {
     }
   });
 
-  // const plants = plantsRaw.filter(p => p.land_id === landId);
-  // const plants = Array.isArray(rawPlants) ? rawPlants : [];
   const activePlants = plants.filter(p => p?.status !== 'harvested');
 
-  // const {data : inspections = []} = useQuery({
-  //   queryKey: ["inspections"],
-  //   queryFn: () => base44.entities.PlantInspection.list(),
-  // });
-
-  
-  // untuk plant inspection
   const combinePlants = useMemo(() => {
     const latestPlantInspection = new Map();
     
     inspections.forEach((ins) => {
-      // Pastikan key konsisten: farmer_land_plant
+
       const key = `${ins.farmer_id}_${ins.land_id}_${ins.plant_id}`;
       
       if (!latestPlantInspection.has(key) || 
@@ -220,13 +202,9 @@ export default function LandDetail() {
       }
     });
 
-    // 2. Gunakan .map() bukan .forEach() agar menghasilkan array baru
     return plants.map((plant) => {
       const key = `${plant.farmer_id}_${plant.land_id}_${plant.id}`;
       const inspection = latestPlantInspection.get(key);
-      
-      // Logika penentuan status produktivitas
-      // Jika ada inspeksi, ambil dari sana. Jika tidak, ambil dari status asli tanaman.
       const currentStatus = inspection?.productivity_status || plant.productivity_status || 'alive';
 
       return {
@@ -239,16 +217,6 @@ export default function LandDetail() {
       };
     });
   }, [plants, inspections]);
-
-  /**
-   * end Update Operation
-   */
-
-  // const { data: land, isLoading } = useQuery({
-  //   queryKey: ["land", landId],
-  //   queryFn: () => base44.entities.Land.filter({ id: landId }).then(res => res[0]),
-  //   enabled: !!landId
-  // });
 
   const validateMutation = useMutation({
     mutationFn: (status) => base44.entities.Land.update(id, { validation_status: status }),
@@ -267,10 +235,6 @@ export default function LandDetail() {
     }
   });
 
-  // const alivePlants = plants.filter(p => p.status === "alive").length;
-  // const sickPlants = plants.filter(p => p.status === "sick").length;
-  // const deadPlants = plants.filter(p => p.status === "dead").length;
-  console.log(combinePlants);
   const plantStats = useMemo(() => {
     if (!combinePlants) return { alive: 0, sick: 0, dead: 0 };
 
@@ -297,6 +261,7 @@ export default function LandDetail() {
         district: land.district,
         regency: land.regency,
         polygon_coordinates: land.polygon_coordinates,
+        path: land.polygon_coordinates,
         center_lat: land.center_lat,
         center_lng: land.center_lng,
         area_hectares: land.area_hectares,
@@ -328,7 +293,7 @@ export default function LandDetail() {
   }
   const statusConfig = validationColors[land.validation_status] || validationColors.pending;
   const StatusIcon = statusConfig.icon;
-
+  const village = villages.find((dt) => dt.id === land.desa_kelurahan_id);
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       <div className="max-w-6xl mx-auto p-6 space-y-6">
@@ -345,8 +310,8 @@ export default function LandDetail() {
               </Button>
             </Link>
             <div>
-              <h1 className="text-2xl font-bold text-slate-900">{land.name}</h1>
-              <p className="text-slate-500">{land.village}, {land.district}</p>
+              <h1 className="text-2xl font-bold text-slate-900">{land.nama}</h1>
+              <p className="text-slate-500">{village?.nama || '-'}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -540,7 +505,8 @@ export default function LandDetail() {
                     <div>
                       <p className="text-xs text-slate-500">Luas Lahan</p>
                       <p className="font-semibold text-slate-900">
-                        {land.area_hectares ? `${land.area_hectares.toFixed(2)} Hektar` : "-"}
+                        {land.area_hectares ? `${land.area_hectares.toFixed(2)} Hektar` : 
+                        land.luas_lahan ? `${Number(parseFloat(land.luas_lahan)).toFixed(4)} Hektar` : "-"}
                       </p>
                     </div>
                   </div>
@@ -550,7 +516,7 @@ export default function LandDetail() {
                     <div>
                       <p className="text-xs text-slate-500">Lokasi</p>
                       <p className="font-medium text-slate-900">
-                        {land.village}, {land.district}<br/>
+                        {village?.nama}, {land.district}<br/>
                         {land.regency}
                       </p>
                     </div>
@@ -669,7 +635,7 @@ export default function LandDetail() {
                 <GPSPlantTagger
                   landId={id}
                   farmerId={land.farmer_id}
-                  landPolygon={land.polygon_coordinates}
+                  landPolygon={land.path}
                   existingPlants={plants}
                   onTagPlant={createPlantMutation.mutate}
                   isLoading={createPlantMutation.isPending}

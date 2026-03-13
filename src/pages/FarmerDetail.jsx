@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/Client";
+import  base44  from "@/api/Client";
+import { entity } from "@/api/entities";
 import { Link, useParams } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import LandCard from "@/components/lands/LandCard";
@@ -29,26 +30,22 @@ export default function FarmerDetail() {
   const [isEditing, setIsEditing] = useState(false);
   const navigate = useNavigate();
 
-  // const { data: farmer, isLoading } = useQuery({
-  //   queryKey: ["farmer", farmerId],
-  //   queryFn: () => base44.entities.Farmer.filter({ id: farmerId }).then(res => res[0]),
-  //   enabled: !!farmerId
-  // });
-
   const { data: farmers = [] } = useQuery({
     queryKey: ["farmers"],
-    queryFn: () => base44.entities.Farmer.list("-created_date"),
+    queryFn: async () => {
+      const data = await entity('farmer').list();
+      return data ?? [];
+    },
     enabled: true
   });
 
-  // const farmer = farmers.find(farmer => farmer.id === farmerId);
   const {data : farmer =[], isLoading }  = useQuery({
     queryKey: ['farmer', id],
     queryFn: async (data) => {
       if(!id) return null;
 
       try{
-        const response = await base44.entities.Farmer.get(id);
+        const response = await entity('farmer').get(id);
         if (typeof response === 'string' && response.includes('<!doctype html>')) {
           console.warn("API returned HTML instead of JSON. Falling back to local.");
         } else if (response && !response.error) {
@@ -80,7 +77,7 @@ export default function FarmerDetail() {
     queryFn: async () => {
       let serverData = [];
       try {
-        const resp = await base44.entities.Land.list("-created_date");
+        const resp = await entity('land').list("-created_date");
         // Cek apakah response string HTML (error fallback server)
         if (typeof resp === 'string' && resp.includes('<!doctype html>')) {
           console.warn("Server returned HTML for Land list");

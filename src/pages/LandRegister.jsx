@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/Client";
+import  base44  from "@/api/Client";
+import { entity } from "@/api/entities";
 import { createPageUrl } from "@/utils";
 import GPSLandMapper from "@/components/lands/GPSLandMapper";
 import { Button } from "@/components/ui/button";
@@ -21,19 +22,34 @@ export default function LandRegister() {
   const urlParams = new URLSearchParams(window.location.search);
   const preselectedFarmerId = urlParams.get("farmer_id");
 
+  // const [formData, setFormData] = useState({
+  //   farmer_id: preselectedFarmerId || "",
+  //   name: "",
+  //   land_status: "owned",
+  //   village: "",
+  //   district: "",
+  //   regency: "",
+  //   polygon_coordinates: null,
+  //   center_lat: null,
+  //   center_lng: null,
+  //   area_hectares: null,
+  //   validation_status: "pending",
+  //   sync_status: "pending"
+  // });
+
+
   const [formData, setFormData] = useState({
-    farmer_id: preselectedFarmerId || "",
-    name: "",
-    land_status: "owned",
-    village: "",
+    nama : '',
+    status_kepemilikan : 'Pribadi',
+    profile_id : '1',
+    desa_kelurahan_id :'1',
     district: "",
     regency: "",
-    polygon_coordinates: null,
-    center_lat: null,
-    center_lng: null,
-    area_hectares: null,
-    validation_status: "pending",
-    sync_status: "pending"
+    path : '',
+    luas_lahan : '',
+    created_by : '',
+    updated_by : '',
+    deleted_by : '',
   });
 
   // const { data: farmers = [] } = useQuery({
@@ -45,7 +61,7 @@ export default function LandRegister() {
     queryKey: ["farmers"],
     queryFn: async () => {
       try {
-        const response = await base44.entities.Farmer.list();
+        const response = await entity("map","petani").list();
         // Pastikan response adalah array
         const serverData = Array.isArray(response) ? response : [];
         
@@ -68,7 +84,8 @@ export default function LandRegister() {
   const createMutation = useMutation({
     mutationFn: async (data) => {
       try{
-        const response = await base44.entities.Land.create(data);
+        console.log("register land")
+        const response = await entity("map", "lahan").create(data);
         if (typeof response === 'string' && response.includes('<!doctype html>')) {
             throw new Error("Menerima HTML, bukan JSON. Endpoint mungkin salah.");
         }
@@ -151,13 +168,15 @@ export default function LandRegister() {
   const handlePolygonSave = (polygonData) => {
     // Pastikan data adalah angka murni, bukan objek LatLng Leaflet
     const cleanCoordinates = JSON.parse(JSON.stringify(polygonData.polygon_coordinates));
-    
+    console.log(cleanCoordinates)
     setFormData(prev => ({
       ...prev,
-      polygon_coordinates: cleanCoordinates,
+      // polygon_coordinates: cleanCoordinates,
+      path : JSON.stringify(cleanCoordinates),
       center_lat: Number(polygonData.center_lat),
       center_lng: Number(polygonData.center_lng),
-      area_hectares: Number(polygonData.area_hectares)
+      area_hectares: Number(polygonData.area_hectares),
+      luas_lahan: polygonData.area_hectares
     }));
 
     toast.success(`Polygon disimpan! Luas: ${polygonData.area_hectares.toFixed(4)} Ha`);
@@ -257,8 +276,8 @@ export default function LandRegister() {
                   <div className="space-y-2">
                     <Label>Nama/Label Lahan</Label>
                     <Input
-                      value={formData.name}
-                      onChange={(e) => handleChange("name", e.target.value)}
+                      value={formData.nama}
+                      onChange={(e) => handleChange("nama", e.target.value)}
                       placeholder="Contoh: Kebun Kopi Utara"
                       required
                       className="h-11"
@@ -283,8 +302,8 @@ export default function LandRegister() {
                   <div className="space-y-2">
                     <Label>Desa</Label>
                     <Input
-                      value={formData.village}
-                      onChange={(e) => handleChange("village", e.target.value)}
+                      value={formData.desa_kelurahan_id}
+                      onChange={(e) => handleChange("desa_kelurahan_id", e.target.value)}
                       placeholder="Nama desa"
                       className="h-11"
                     />

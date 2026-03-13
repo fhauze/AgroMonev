@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../database-pertani-web"
+		},
+		{
+			"path": "../siks"
+		}
+	],
+	"settings": {}
+}

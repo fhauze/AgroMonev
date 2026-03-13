@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/Client";
+import  base44  from "@/api/Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,6 +13,7 @@ import {
 import { motion } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { OfflineService } from "@/components/common/offlineStorage";
+import { entity } from "@/api/entities";
 
 const COLORS = ["#10b981", "#f59e0b", "#ef4444", "#6b7280"];
 
@@ -40,30 +41,33 @@ export default function ProductivityMonitoring() {
   const [filterLevel, setFilterLevel] = useState("regency");
   const [selectedRegion, setSelectedRegion] = useState("all");
 
-  // const { data: lands = [] } = useQuery({
-  //   queryKey: ["lands"],
-  //   queryFn: () => base44.entities.Land.list()
-  // });
-
-  // const { data: plants = [] } = useQuery({
-  //   queryKey: ["plants"],
-  //   queryFn: () => base44.entities.Plant.list()
-  // });
-
   const {data: rawLands = []} = useQuery({
     queryKey: ['lands'],
     queryFn: async () => {
       let dataServer = [];
       try{
-        const res = await base44.entities.Farmer.list();
-        dataServer = Array.isArray(res) ? res : [];
+        const res = await entity('map', 'lahan').list();
+        dataServer = Array.isArray(res.data) ? res.data : [];
         
-      }catch(err){}
-        const localData = await OfflineService.getEntities('lands');
-        const combined = new Map();
-        dataServer.forEach(d => combined.set(d.id, d));
-        localData.array.forEach(f => combined.set(f.id, f));
-        return Array.from(combined.values());
+      }catch(err){
+        console.error(err)
+      }
+      const localData = await OfflineService.getEntities('lands');
+      const combined = new Map();
+      dataServer.forEach(d => {
+        if (d.id) combined.set(d.id, { ...d, storage: 'server' });
+      });
+      try{
+        
+        localData && Array.isArray(localData) ? localData.forEach(f => {
+          const key = f.id || f.temp_id;
+          combined.set(key, { ...combined.get(key), ...f, storage: 'local' });
+        }) : [];
+      }catch(err){
+        console.error(err)
+      }
+
+      return Array.from(combined.values());
     }
   });
 
@@ -72,21 +76,24 @@ export default function ProductivityMonitoring() {
     queryFn: async () => {
       let data = [];
       try{
-        const res = await base44.entities.Plant.list();
-        data = Array.isArray(res) ? res :[];
+        const res = await entity('map', 'tanaman').list();
+        data = Array.isArray(res.data.data) ? res.data.data :[];
       }catch(e){}
       const local = await OfflineService.getEntities('plants');
       const mapped = new Map();
-      data.forEach(d => mapped.set(d.id, d));
-      local.forEach(l => mapped.set(l.id, l));
+      data.forEach(d => {
+        if(d.id) mapped.set(d.id, {...d, storage:'server'})
+      });
 
+      Array.isArray(local) ? local.forEach(l => mapped.set(l.id, l)) : [];
+      
       return Array.from(mapped.values());
     }
   });
-
+  
   const lands = Array.isArray(rawLands) ? rawLands : [];
   const plants = Array.isArray(rawPlants) ? rawPlants : [];
-
+  
   // const { data: harvests = [] } = useQuery({
   //   queryKey: ["harvests"],
   //   queryFn: () => base44.entities.Harvest.list()
@@ -96,8 +103,8 @@ export default function ProductivityMonitoring() {
     queryKey: ["harvests"],
     queryFn: async () => {
       try {
-        const res = await base44.entities.Harvest.list();
-        return Array.isArray(res) ? res : [];
+        const res = await entity('map', 'panen').list();
+        return Array.isArray(res.data.data) ? res.data.data : [];
       } catch (e) {
         return [];
       }
@@ -119,7 +126,7 @@ export default function ProductivityMonitoring() {
     : lands.filter(l => l[filterLevel] === selectedRegion);
   
   const filteredLandIds = filteredLands.map(l => l.id);
-  const filteredPlants = plants.filter(p => filteredLandIds.includes(p.land_id));
+  const filteredPlants = plants.filter(p => filteredLandIds.includes(p.land_id || p.lahan_id));
 
   // Calculate productivity stats
   const calculateProductivityStats = () => {

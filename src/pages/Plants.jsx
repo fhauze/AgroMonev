@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/Client";
+import  base44  from "@/api/Client";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import EmptyState from "@/components/common/EmptyState";

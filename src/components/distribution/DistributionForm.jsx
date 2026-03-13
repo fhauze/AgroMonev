@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/Client";
+import  base44  from "@/api/Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Send, Package, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
+import { entity } from "@/api/entities";
 
 const gradeConfig = {
   A: { label: "Grade A - Premium", color: "text-emerald-600" },
@@ -20,7 +21,7 @@ export default function DistributionForm({ farmer, onSuccess, onClose, harvests 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     offtaker_id: "",
-    harvest_id: "", // Tambahkan untuk tracking asal panen
+    harvest_id: "",
     commodity_name: "",
     quantity_kg: "",
     farmer_grade: "",
@@ -31,13 +32,22 @@ export default function DistributionForm({ farmer, onSuccess, onClose, harvests 
   // Load offtakers
   const { data: offtakers = [] } = useQuery({
     queryKey: ["offtakers-active"],
-    queryFn: () => base44.entities.Offtaker.filter({ is_active: true })
+    queryFn: async () => {
+      try{
+        const resp = await entity('map', 'offtaker').list();
+        const data = resp.data;
+        console.log(data, "Offtakers")
+        return data ?? []
+      }catch(err){
+        console.error("Failed to get offtakers data")
+        return [];
+      }
+    }
   });
 
   // Handler saat panen dipilih
   const handleHarvestChange = (harvestId) => {
-    const selected = harvests.find(h => h.id === harvestId);
-    
+    const selected = harvests.find(h => h.id === Number(harvestId));
     if (selected) {
       setFormData(p => ({
         ...p,
@@ -60,12 +70,12 @@ export default function DistributionForm({ farmer, onSuccess, onClose, harvests 
     try {
       const selectedOfftaker = offtakers.find(o => o.id === formData.offtaker_id);
       
-      await base44.entities.Distribution.create({
+      await entity('distribusi', 'panen').create({
         farmer_id: farmer.id,
         farmer_name: farmer.full_name,
         offtaker_id: formData.offtaker_id,
         offtaker_name: selectedOfftaker?.company_name || "",
-        harvest_id: formData.harvest_id, // Simpan referensi panen
+        harvest_id: formData.harvest_id,
         commodity_name: formData.commodity_name,
         quantity_kg: parseFloat(formData.quantity_kg),
         farmer_grade: formData.farmer_grade,

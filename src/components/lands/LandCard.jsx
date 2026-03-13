@@ -31,7 +31,7 @@ export default function LandCard({ land, farmerName, plantCount = 0 }) {
     <Card className="border-0 shadow-sm hover:shadow-md transition-all p-5 bg-white group">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h3 className="font-semibold text-slate-900">{land.name}</h3>
+          <h3 className="font-semibold text-slate-900">{land.nama}</h3>
           {farmerName && <p className="text-sm text-slate-500">{farmerName}</p>}
         </div>
         <Badge className={`${validationColors[land.validation_status]} border font-medium text-xs`}>
@@ -46,7 +46,7 @@ export default function LandCard({ land, farmerName, plantCount = 0 }) {
             <span>Luas Lahan</span>
           </div>
           <p className="font-semibold text-slate-900">
-            {land.area_hectares ? `${land.area_hectares.toFixed(2)} Ha` : "-"}
+            {land.area_hectares ? `${land.area_hectares.toFixed(2)} Ha` : land.luas_lahan ? `${land.luas_lahan} Ha` :  "-"}
           </p>
         </div>
         <div className="bg-slate-50 rounded-lg p-3">
@@ -61,7 +61,7 @@ export default function LandCard({ land, farmerName, plantCount = 0 }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm text-slate-500">
           <MapPin className="w-4 h-4" />
-          <span className="truncate">{land.village}, {land.district}</span>
+          <span className="truncate">{land.village || land.desa_kelurahan_id }, {land.district || 'Unknown'}</span>
         </div>
         <Link to={createPageUrl("LandDetail") + `?id=${land.id}`}>
           <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity text-emerald-600">

@@ -61,24 +61,28 @@ import FarmerPortal from './pages/FarmerPortal';
 import Offtakers from './pages/Offtakers';
 import OfftakerPortal from './pages/OfftakerPortal';
 import ProductivityMonitoring from './pages/ProductivityMonitoring';
+import Login from './pages/Login.jsx';
+import Register from './pages/Register.jsx'
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Dashboard": Dashboard,
-    "Farmers": Farmers,
-    "FarmerRegister": FarmerRegister,
-    "FarmerDetail": FarmerDetail,
-    "Lands": Lands,
-    "LandRegister": LandRegister,
-    "LandDetail": LandDetail,
-    "Plants": Plants,
-    "FarmerPortal": FarmerPortal,
-    "Validators": Validators,
-    "ValidatorPortal": ValidatorPortal,
-    "Offtakers": Offtakers,
-    "OfftakerPortal": OfftakerPortal,
-    "ProductivityMonitoring": ProductivityMonitoring
+    "Dashboard": {component: Dashboard, roles:['super_admin']},
+    "Farmers": {component: Farmers, roles: ['super_admin']},
+    "FarmerRegister": {component: FarmerRegister, roles:['super_admin']},
+    "FarmerDetail": {component: FarmerDetail, roles: ['super_admin']},
+    "Lands": {component: Lands, roles:['super_admin']},
+    "LandRegister": {component: LandRegister, roles:['super_admin']},
+    "LandDetail": {component: LandDetail, roles:['super_admin', 'petani']},
+    "Plants": {component: Plants, roles:['super_admin']},
+    "FarmerPortal": {component: FarmerPortal, roles:['super_admin', 'petani']},
+    "Validators": {component: Validators, roles: ['super_admin']},
+    "ValidatorPortal": {component: ValidatorPortal, roles: ['super_admin']},
+    "Offtakers": {component: Offtakers, roles: ['super_admin']},
+    "OfftakerPortal": {component: OfftakerPortal, roles: 'super_admin'},
+    "ProductivityMonitoring": {component: ProductivityMonitoring, roles:['super_admin', 'petani']},
+    "Login": {component: Login, roles:[]},
+    "Register": {component: Register, roles:[]},
 }
 
 export const pagesConfig = {

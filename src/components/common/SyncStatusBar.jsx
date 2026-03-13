@@ -6,25 +6,37 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { isOnline } from "../../services/networkService";
 import { useEffect, useState } from "react";
+import { OfflineService } from "./offlineStorage";
 
 export default function SyncStatusBar({ compact = false }) {
-  const { syncing, pendingCount, lastSync, forceSync } = useSyncManager();
+  const { syncing, lastSync, forceSync } = useSyncManager();
   const [online, setOnline] = useState(false);
+  const [pendingCount, setPendingCount] = useState()
+  // const pendingCount = OfflineService.getPendingCount();
 
   useEffect(() => {
      const controller = new AbortController();
 
     const check = async () => {
       try {
-        const status = await isOnline(controller.signal);
+        const [status, pending] = await Promise.all([
+          isOnline(),
+          OfflineService.getPendingCount()
+        ]);
+        setPendingCount(pending)
         setOnline(status);
       } catch {}
     };
 
     check();
 
-    return () => controller.abort();
-  }, []);
+    const interval = setInterval(check, 5000);
+
+    return () => {
+      controller.abort(),
+      clearInterval(interval)
+    };
+  }, [pendingCount]);
 
   if (compact) {
     return (

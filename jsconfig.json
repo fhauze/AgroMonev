@@ -16,6 +16,6 @@
     "resolveJsonModule": true,
     "types": []
   },
-  "include": ["src/components/**/*.js", "src/pages/**/*.jsx", "src/Layout.jsx", "src/api/Client.js", "src/components/common/offlineStorage.jsx"],
+  "include": ["src/components/**/*.js", "src/pages/**/*.jsx", "src/Layout.jsx", "src/api/Client.js", "src/components/common/offlineStorage.jsx", "src/pages/Login.jsx"],
   "exclude": ["node_modules", "dist", "src/vite-plugins", "src/components/ui", "src/api", "src/lib"]
 } 

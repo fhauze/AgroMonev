@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { base44 } from "@/api/Client";
+// import { base44 } from "@/api/Client";
 import { OfflineService, isOnline } from "./offlineStorage"; // Perhatikan impor ini
 import { toast } from "sonner";
 
@@ -10,9 +10,9 @@ export function useOfflineEntity(entityType) {
     setLoading(true);
     try {
       if (isOnline()) {
-        const data = await base44.entities[entityType].list();
+        // const data = await base44.entities[entityType].list();
         // Opsional: Update SQLite dengan data terbaru dari server di sini
-        return data;
+        return [];
       }
       // Jika Offline, ambil dari SQLite
       return await OfflineService.getEntities(entityType);
@@ -26,7 +26,7 @@ export function useOfflineEntity(entityType) {
   const create = useCallback(async (data) => {
     if (isOnline()) {
       try {
-        return await base44.entities[entityType].create(data);
+        // return await base44.entities[entityType].create(data);
       } catch (e) {
         console.warn("Switching to offline mode...");
       }

@@ -2,12 +2,13 @@ import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { 
   LayoutDashboard, Users, Map, TreePine, 
-  CloudOff, Menu, X, ChevronRight, Shield, Wifi, WifiOff, RefreshCw
+  CloudOff, Menu, X, ChevronRight, Shield, Wifi, WifiOff, RefreshCw, LogOut
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { OfflineService, isOnline as checkIsOnline } from "@/components/common/offlineStorage";
+import {useAuth} from '@/lib/AuthContext';
 
 function SyncIndicator() {
   const [online, setOnline] = useState(checkIsOnline());
@@ -108,21 +109,31 @@ async function checkInternet() {
 
 
 const navigation = [
-  { name: "Dashboard", page: "Dashboard", icon: LayoutDashboard },
-  { name: "Petani", page: "Farmers", icon: Users },
-  { name: "Lahan", page: "Lands", icon: Map },
-  { name: "Tanaman", page: "Plants", icon: TreePine },
-  { name: "Produktivitas", page: "ProductivityMonitoring", icon: LayoutDashboard },
-  { name: "Validator", page: "Validators", icon: Shield },
-  { name: "Offtaker", page: "Offtakers", icon: Users },
-  { name: "Portal Petani", page: "FarmerPortal", icon: Users },
-  { name: "Portal Validator", page: "ValidatorPortal", icon: Shield },
-  { name: "Portal Offtaker", page: "OfftakerPortal", icon: Users },
+  { name: "Dashboard", page: "Dashboard", icon: LayoutDashboard , roles: ['super_admin']},
+  { name: "Petani", page: "Farmers", icon: Users, roles: ['super_admin'] },
+  { name: "Lahan", page: "Lands", icon: Map, roles: ['super_admin'] },
+  { name: "Tanaman", page: "Plants", icon: TreePine, roles: ['super_admin'] },
+  { name: "Produktivitas", page: "ProductivityMonitoring", icon: LayoutDashboard, roles: ['super_admin', 'petani'] },
+  { name: "Validator", page: "Validators", icon: Shield, roles: ['super_admin'] },
+  { name: "Offtaker", page: "Offtakers", icon: Users, roles: ['super_admin'] },
+  { name: "Portal Petani", page: "FarmerPortal", icon: Users, roles: ['super_admin', 'petani'] },
+  { name: "Portal Validator", page: "ValidatorPortal", icon: Shield, roles: ['super_admin'] },
+  { name: "Portal Offtaker", page: "OfftakerPortal", icon: Users, roles: ['super_admin'] },
 ];
 
 export default function Layout({ children, currentPageName }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const { user, logout } = useAuth();
+
+  if (!user) {
+    return <div className="flex h-screen items-center justify-center">Memuat Sesi...</div>;
+  }
+  
+  const filteredNavigation = navigation.filter((item) => {
+    if (!user?.role) return false;
+    return item.roles.includes(user.role);
+  });
 
   const isActivePage = (pageName) => {
     return currentPageName === pageName || location.pathname.includes(pageName.toLowerCase());
@@ -131,7 +142,7 @@ export default function Layout({ children, currentPageName }) {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200 z-50 flex items-center justify-between px-4">
+      <div className="lg:hidden fixed top-0 left-0 right-0 pt-safe h-16 bg-white border-b border-slate-200 z-50 flex items-center justify-between px-4">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)}>
             <Menu className="w-6 h-6" />
@@ -155,7 +166,7 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Sidebar */}
       <aside className={cn(
-        "fixed top-0 left-0 h-full w-64 bg-white border-r border-slate-200 z-50 transition-transform duration-300",
+        "fixed top-0 left-0 pt-safe h-full w-64 bg-white border-r border-slate-200 z-50 transition-transform duration-300",
         "lg:translate-x-0",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
@@ -181,8 +192,9 @@ export default function Layout({ children, currentPageName }) {
           </div>
 
           <nav className="space-y-1">
-            {navigation.map((item) => {
+            {filteredNavigation.filter((n) => n.roles.includes(user.role)).map((item) => {
               const isActive = isActivePage(item.page);
+              const isVisible = item.roles;
               return (
                 <Link
                   key={item.page}
@@ -211,7 +223,22 @@ export default function Layout({ children, currentPageName }) {
 
         {/* Sync Status */}
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-100">
-          <SyncIndicator />
+          <div className="p-4 space-y-2">
+            {/* Tombol Logout */}
+            <Button 
+              variant="ghost" 
+              onClick={() => {
+                logout();
+              }}
+              className="w-full flex items-center justify-start gap-3 px-4 py-3 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 group"
+            >
+              <LogOut className="w-5 h-5 text-slate-400 group-hover:text-red-500" />
+              <span className="font-medium">Keluar Sesi</span>
+            </Button>
+
+            {/* Indikator Online */}
+            <SyncIndicator />
+          </div>
         </div>
       </aside>
 

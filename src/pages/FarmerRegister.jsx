@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/Client";
+import  base44  from "@/api/Client";
+import { entity } from "@/api/entities";
 import { createPageUrl } from "@/utils";
 import FarmerForm from "@/components/farmers/FarmerForm";
 import { Button } from "@/components/ui/button";
@@ -20,7 +21,7 @@ export default function FarmerRegister() {
       console.log("1. Memulai proses simpan...", data);
       try {
         // return await base44.entities.Farmer.create(data);
-        const response = await base44.entities.Farmer.create(data);
+        const response = await entity('map', 'lahan').create(data);
         if (typeof response === 'string' && response.includes('<!doctype html>')) {
           throw new Error("Menerima HTML, bukan JSON. Endpoint mungkin salah.");
         }

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/Client";
+import  base44  from "@/api/Client";
+import { entity } from "@/api/entities";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -35,7 +36,7 @@ const issueOptions = [
   { value: "other", label: "Lainnya", icon: AlertTriangle }
 ];
 
-export default function PlantInspectionForm({ plant, onClose, onSuccess }) {
+export default function PlantInspectionForm({ plant,farmer_id, onClose, onSuccess }) {
   const queryClient = useQueryClient();
   const [form, setForm] = useState({
     health_status: "healthy",
@@ -43,31 +44,57 @@ export default function PlantInspectionForm({ plant, onClose, onSuccess }) {
     issue_type: "none",
     issue_description: "",
     recommendation: "",
-    notes: ""
+    notes: "",
   });
 
   const inspectionMutation = useMutation({
-    mutationFn: async () => {
-      // Create inspection record
-      await base44.entities.PlantInspection.create({
-        plant_id: plant.id,
-        land_id: plant.land_id,
-        farmer_id: plant.farmer_id,
-        inspection_date: new Date().toISOString().split('T')[0],
-        ...form
-      });
+    mutationFn: async (data) => {
+      console.log("create inspection", data)
+      try{
+        const existingInspeksi = await entity('map', 'inspeksi').find({
+          petani_id: farmer_id,
+          lahan_id: plant.lahan_id,
+          tanaman_id: plant.id
+        });
+
+        console.log(existingInspeksi.data.data, 'inspeksi');
+        const payload = {
+          tanaman_id: plant.id,
+          lahan_id: plant.lahan_id,
+          petani_id: farmer_id,
+          inspection_date: new Date().toISOString(),
+          ...data
+        };
+        if (existingInspeksi.data.data && existingInspeksi.data.data.length > 0) {
+          const idToUpdate = existingInspeksi.data.data[0].id;
+          await entity('map', 'inspeksi').update(idToUpdate, payload);
+          console.log("Data updated successfully");
+        } else {
+          await entity('map', 'inspeksi').create(payload);
+          console.log("Data created successfully");
+        }
+        // await entity('map', 'inspeksi').create({
+        //   'tanaman_id' : plant.id,
+        //   "lahan_id" : plant.lahan_id,
+        //   "petani_id" : farmer_id,
+        //   inspection_date: new Date().toISOString(),
+        //   ...data
+        // });
+      }catch(e){
+        console.error("Insert failed : ", e)
+      }
 
       // Update plant status
       const plantStatus = form.health_status === "severe_issue" ? "sick" : 
                           form.health_status === "healthy" ? "alive" : "alive";
       
-      await base44.entities.Plant.update(plant.id, {
-        status: plantStatus,
-        productivity_status: form.productivity_status,
-        issue_type: form.issue_type,
-        issue_description: form.issue_description,
-        last_inspection_date: new Date().toISOString().split('T')[0]
-      });
+      // await entity('map', 'inspeksi').update(plant.id, {
+      //   status: plantStatus,
+      //   productivity_status: form.productivity_status,
+      //   issue_type: form.issue_type,
+      //   issue_description: form.issue_description,
+      //   last_inspection_date: new Date().toISOString().split('T')[0]
+      // });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["plants"] });
@@ -192,7 +219,7 @@ export default function PlantInspectionForm({ plant, onClose, onSuccess }) {
           </Button>
           <Button 
             className="flex-1 bg-emerald-600 hover:bg-emerald-700"
-            onClick={() => inspectionMutation.mutate()}
+            onClick={() => inspectionMutation.mutate(form)}
             disabled={inspectionMutation.isPending}
           >
             {inspectionMutation.isPending ? (

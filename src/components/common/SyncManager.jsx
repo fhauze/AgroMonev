@@ -1,6 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import { base44 } from "@/api/Client";
-// Impor yang diperbaiki: Ambil isOnline dan OfflineService
 import { OfflineService, isOnline } from "./offlineStorage"; 
 import { toast } from "sonner";
 
@@ -9,11 +7,35 @@ export function useSyncManager() {
   const [syncing, setSyncing] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
 
+  const executeSync = useCallback(async () => {
+    if (!isOnline() || syncing) return;
+
+    setSyncing(true);
+    try {
+      const hasPending = await OfflineService.hasPendingData();
+
+      if (hasPending) {
+        console.log("📤 Memulai Push Sinkronisasi...");
+        await OfflineService.syncAllPending();
+        toast.success("Sinkronisasi data berhasil");
+      } else {
+        // 2. Jika tidak ada pending, ambil data terbaru (PULL)
+        console.log("🔄 Data lokal bersih. Melakukan Pull dari server...");
+        await OfflineService.downloadFromServer();
+      }
+    } catch (error) {
+      console.error('Sync process failed:', error);
+    } finally {
+      setSyncing(false);
+    }
+  }, []);
+
   // Monitor status online
   useEffect(() => {
     const handleOnline = () => {
       setOnline(true);
       toast.success("Koneksi internet tersambung");
+      console.log("Check Online Status")
       syncPendingData();
     };
     const handleOffline = () => {
@@ -30,10 +52,20 @@ export function useSyncManager() {
     };
   }, []);
 
-  // Update jumlah antrean dari SQLite secara berkala
+  useEffect(() => {
+    const handleOnline = () => {
+      setOnline(true);
+      executeSync();
+    };
+
+    window.addEventListener('online', handleOnline);
+    if (navigator.onLine) executeSync();
+    return () => window.removeEventListener('online', handleOnline);
+  }, [executeSync]);
+
   useEffect(() => {
     const updateCount = async () => {
-      const count = await OfflineService.getPendingCount(); // Kita buat fungsi ini di bawah
+      const count = await OfflineService.getPendingCount();
       setPendingCount(count);
     };
     
@@ -48,8 +80,8 @@ export function useSyncManager() {
     
     setSyncing(true);
     try {
-      await OfflineService.syncAll(base44);
-      // Update UI setelah sync selesai
+      // await OfflineService.syncAll(base44);
+      
       const count = await OfflineService.getPendingCount();
       setPendingCount(count);
     } catch (error) {
@@ -64,6 +96,7 @@ export function useSyncManager() {
     syncing,
     pendingCount,
     syncPendingData,
-    forceSync: syncPendingData
+    // forceSync: syncPendingData
+    forceSync: executeSync
   };
 }

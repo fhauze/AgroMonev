@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "./AuthContext";
-import { base44 } from "@/api/Client";
+// import { base44 } from "@/api/Client";
 import { pagesConfig } from "@/pages.config";
 
 export default function NavigationTracker() {
@@ -26,15 +26,15 @@ export default function NavigationTracker() {
       pageName = matchedKey ?? null;
     }
 
-    if (isAuthenticated && pageName) {
-      setTracking(true);
+    // if (isAuthenticated && pageName) {
+    //   setTracking(true);
 
-      base44.appLogs
-        .logUserInApp(pageName)
-        .finally(() => {
-          setTimeout(() => setTracking(false), 600);
-        });
-    }
+    //   base44.appLogs
+    //     .logUserInApp(pageName)
+    //     .finally(() => {
+    //       setTimeout(() => setTracking(false), 600);
+    //     });
+    // }
   }, [location.pathname]);
 
   if (!tracking) return null;

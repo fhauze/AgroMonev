@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/Client";
+import  base44  from "@/api/Client";
+import { entity } from "@/api/entities";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import FarmerCard from "@/components/farmers/FarmerCard";
@@ -20,28 +21,18 @@ export default function Farmers() {
   const { data: farmers = [], isLoading } = useQuery({
     queryKey: ["farmers"],
     queryFn: async () => {
-      // 1. Ambil data dari server (API)
-      let serverData = [];
+      let serverData;
       try {
-        serverData = await base44.entities.Farmer.list("-created_date");
+        serverData = await entity("map","petani").list();
       } catch (err) {
         console.warn("Server unreachable, loading local data only");
       }
-
-      // 2. Ambil data dari Dexie (Lokal)
       const localData = await OfflineService.getEntities("farmers");
-
-      // 3. Gabungkan keduanya
-      // Kita pakai Map agar ID yang sama tidak double (Data server vs Data lokal)
       const combined = new Map();
-      
-      // Masukkan data server dulu
-      safeArray(serverData).forEach(f => combined.set(f.id, f));
-      
-      // Masukkan data lokal (akan menimpa data server jika ID sama, bagus untuk update offline)
-      safeArray(localData).forEach(f => combined.set(f.id, f));
 
-      // Kembalikan sebagai array, urutkan berdasarkan yang terbaru
+      safeArray(serverData).forEach(f => combined.set(f.id, f));
+      safeArray(localData).forEach(f => combined.set(f.id, f));
+      
       return Array.from(combined.values()).sort((a, b) => 
         new Date(b.created_date || b.created_at) - new Date(a.created_date || a.created_at)
       );
