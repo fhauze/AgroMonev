@@ -149,11 +149,13 @@ export const OfflineService = {
       }
     }
   },
-  downloadFromServer: async () => {
+  downloadFromServer: async (user) => {
+
     const token = localStorage.getItem('access_token');
     const baseURL = import.meta.env.VITE_BASE44_API_URL.replace(/\/+$/, "");
+    console.log(user, "Userr")
     const syncConfigs = [
-      { endpoint: 'auth/profile', table: db.farmers },
+      { endpoint: `auth/profile/1`, table: db.farmers },
       { endpoint: 'map/lahan', table: db.lands },
       { endpoint: 'map/tanaman', table: db.plants },
       { endpoint: 'map/panen', table: db.harvest},

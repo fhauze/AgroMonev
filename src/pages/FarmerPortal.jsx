@@ -28,6 +28,7 @@ import HarvestForm  from "@/components/harvest/HarvestForm";
 import { toast } from "sonner";
 import { motion, sync } from "framer-motion";
 import { OfflineService } from "@/components/common/offlineStorage";
+import axios from 'axios';
 
 
 export default function FarmerPortal() {
@@ -87,6 +88,7 @@ export default function FarmerPortal() {
     path_ktp: '',
     role:'',
     user_id:1,
+    ktp:'',
   });
 
   const { data: villages = [] } = useQuery({
@@ -110,7 +112,9 @@ export default function FarmerPortal() {
     queryFn: async() => {
       try{
         const resp = await entity('distribusi','panen').list();
-        const data = resp.data || [];
+        let data = resp.data || [];
+        data = data.filter((dt) => dt.farmer_id === farmer.id)
+
         return data;
       }catch(err){
         console.error("data gagal diabbil")
@@ -144,17 +148,21 @@ export default function FarmerPortal() {
       let lahans = [];
       try{
         const listLahan = await entity('map', 'lahan').list();
-        lahans = Array.isArray(listLahan.data) ? listLahan.data : []
+        lahans = Array.isArray(listLahan.data) 
+        ? listLahan.data.filter(l => l.profile_id === profile.id) 
+        : [];
+        
       }catch(err){
         console.warn("Online data is un reachable")
       }
       try{
         const offlineData = await OfflineService.getEntities('lands');
+        const offlineLahan = safeArray(offlineData).filter(lh => lh.profile_id === profile.id);
         const combined = new Map();
-        safeArray(lahans)
-          .filter(l => l.sync_status === 'pending')
-          .forEach(element => combined.set(element.id, element));
-        safeArray(offlineData).forEach(el => combined.set(el.id, el));
+
+        safeArray(offlineLahan).forEach(el => combined.set(el.id, el));
+        safeArray(lahans).forEach(l => combined.set(l.id, l));
+        
         return Array.from(combined.values()).sort((a, b) => 
           new Date(b.created_date || b.created_at) - new Date(a.created_date || a.created_at)
         );
@@ -290,7 +298,24 @@ export default function FarmerPortal() {
   const updateProfileMutation = useMutation({
     mutationFn: async (data) => {
       console.log(profile)
-      return await entity('auth','profile').update(profile?.id, data);
+      const token = localStorage.getItem("access_token");
+      try{
+        const response = await axios.post(
+          `https://agro.pkc-dev.org/api/auth/profile/1`, 
+          data,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          }
+        );
+
+        return response;
+      }catch(err){
+        console.log(err)
+        return err;
+      }
+      // return await entity('auth','profile').update(profile?.id, data);
     },
     onSuccess: () => {
       console.log("Berhasil mengubah data profile")
@@ -329,7 +354,7 @@ export default function FarmerPortal() {
         try{
           const [rMe, rFar] = await Promise.all([
             entity('auth', 'me').list(),
-            entity('auth', 'profile').list()
+            entity('auth', 'profile/1').list()
           ]);
 
           const dataMe = rMe.data || [];
@@ -379,7 +404,7 @@ export default function FarmerPortal() {
             email: profile?.email || currentProfile.email || ''
           });
         }
-
+        
       } catch (error) {
         console.error("Data error: ", error)
       } finally {
@@ -402,17 +427,24 @@ export default function FarmerPortal() {
 
   // profile control
   const handleToggleEdit = async () => {
-    const [file, setFile] = useState();
-    
+    const formDataBaru = new FormData();
     if (isEditing) {
+      formDataBaru.append('_method', 'PUT');
+      formDataBaru.append('nama', farmerFormData.nama);
+      formDataBaru.append('telepon', farmerFormData.telepon);
+      formDataBaru.append('alamat', farmerFormData.alamat);
+      formDataBaru.append('kk', farmerFormData.kk);
+      formDataBaru.append('file_ktp', selectedKtp);
+      formDataBaru.append('ktp', farmerFormData.ktp);
+      formDataBaru.append('email', farmerFormData.email);
+      formDataBaru.append('desa_kelurahan_id', '1');
+      console.log("Isi FormData:", Object.fromEntries(formDataBaru.entries()));
       try {
-        if(selectedKtp){
-          farmerFormData.append('file_ktp', selectedKtp)
-        }
-        updateProfileMutation.mutate(farmerFormData);
+        updateProfileMutation.mutate(formDataBaru);
         toast.success("Profil berhasil diperbarui");
         setIsEditing(false);
       } catch (error) {
+        console.error("Gagal Update Data : ", error)
         toast.error("Gagal menyimpan perubahan");
       }
     } else {
@@ -423,13 +455,14 @@ export default function FarmerPortal() {
   const handleCancel = () => {
     // Reset form ke data asli dari prop 'farmer'
     setFarmerFormData({
-      nama: currentUser.profile?.nama || currentUser.nama || currentUser.name || "",
-      telepon: currentUser.profile?.telepon || currentUser.telepon || currentUser.phone || "",
-      alamat: currentUser.profile?.alamat || currentUser.alamat || "",
-      kk: currentUser.profile?.kk || currentUser.kk || "",
-      ktp: currentUser.profile?.ktp || currentUser.ktp || "",
-      desa_kelurahan_id: currentUser.profile?.desa_kelurahan_id || currentUser.kelurahan_desa_id || 0,
-      email: profile?.email || currentProfile.email || ''
+      nama: profile?.nama || "",
+      telepon: profile?.telepon || "",
+      alamat: profile?.alamat || "",
+      kk: profile?.kk || "",
+      ktp: profile?.ktp || profile.ktp || "",
+      desa_kelurahan_id: profile?.desa_kelurahan_id || 0,
+      email: profile?.email || '',
+
     });
     
     // Bersihkan preview foto jika ada
@@ -450,9 +483,10 @@ export default function FarmerPortal() {
 
   const handleFileChange = (e) => {
     const fileKtp = e.target.files ? e.target.files[0] : null;
+    
     if(fileKtp){
-      if(fileKtp.size > 2 * 1024 * 1024){
-        toast.error("Ukuran file terlalu besar. Maksimal 2MB.");
+      if(fileKtp.size > 3 * 1024 * 1024){
+        toast.error("Ukuran file terlalu besar. Maksimal 3MB.");
         return;
       }
       setSelectedKtp(fileKtp);
@@ -528,6 +562,7 @@ export default function FarmerPortal() {
   // Main portal view
   const alivePlants = plants.length;
   const totalArea = lands.reduce((sum, l) => sum + parseFloat(l.area_hectares || l.luas_lahan || 0), 0);
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-slate-100">
       <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
@@ -1030,10 +1065,10 @@ export default function FarmerPortal() {
                         <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
                           <p className="text-xs text-slate-500 mb-2">Lampiran KTP</p>
                           <img 
-                            src={farmer.path_ktp} 
+                            src={profile.path_ktp} 
                             alt="KTP" 
                             className="w-full h-32 object-cover rounded-md cursor-pointer hover:opacity-90 transition-opacity"
-                            onClick={() => window.open(farmer.path_ktp, '_blank')}
+                            onClick={() => window.open(profile.ktp, '_blank')}
                           />
                         </div>
                       )

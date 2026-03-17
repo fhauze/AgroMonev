@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { OfflineService, isOnline } from "./offlineStorage"; 
 import { toast } from "sonner";
+import { useAuth } from "@/lib/AuthContext";
 
 export function useSyncManager() {
   const [online, setOnline] = useState(isOnline());
   const [syncing, setSyncing] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
+  const { user } = useAuth();
 
   const executeSync = useCallback(async () => {
     if (!isOnline() || syncing) return;
