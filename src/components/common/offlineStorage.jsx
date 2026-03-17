@@ -34,10 +34,7 @@ export const OfflineService = {
     };
 
     try {
-      // update first
       await db[table].put(record);
-
-      // gonna insert
       await db.pending_sync.add({
         id: `q_${Date.now()}`,
         entity_type: entityType,
@@ -46,7 +43,7 @@ export const OfflineService = {
         created_at: new Date().toISOString()
       });
 
-      console.log(`✅ Dexie: Data ${entityType} tersimpan aman!`);
+      // console.log(`✅ Dexie: Data ${entityType} tersimpan aman!`);
       return id;
     } catch (err) {
       console.error("❌ Dexie Error:", err);
@@ -56,7 +53,7 @@ export const OfflineService = {
 
   getEntities: async (entityType, filter = {}) => {
     const user = localStorage.getItem('user_data')
-    console.log("Data user :", user)
+    // console.log("Data user :", user)
     try {
       if (!entityType) return [];
       const table = entityType.toLowerCase().endsWith('s') 
@@ -79,19 +76,19 @@ export const OfflineService = {
       if(invalidData.length > 0){
         const idsToDelete = invalidData.map(d => d.id);
         await dbTable.bulkDelete(idsToDelete);
-        console.log(`🧹 Cleanup: Menghapus ${invalidData.length} data tanpa NIK dari ${table}`);
+        // console.log(`Cleanup: Menghapus ${invalidData.length} data tanpa NIK dari ${table}`);
       }
       
       if (filter && typeof filter === 'object' && Object.keys(filter).length > 0) {
-        console.log(`🔍 Fetching ${table} with filter:`, filter);
+        // console.log(`Fetching ${table} with filter:`, filter);
         return await dbTable.where(filter).toArray();
       }
       
-      console.log(`🔍 Fetching all from ${table}`);
+      // console.log(`Fetching ...... all from ${table}`);
       return await dbTable.reverse().toArray();
 
     } catch (e) {
-      console.error("❌ Gagal ambil data dari Dexie:", e);
+      console.error("Errof fetching data from Dexie:", e);
       return [];
     }
   },
@@ -128,10 +125,10 @@ export const OfflineService = {
         created_at: new Date().toISOString()
       });
 
-      console.log(`🗑️ Dexie: Data ${entityType} dengan ID ${id} berhasil dihapus lokal!`);
+      // console.log(`Dexie: Data ${entityType} dengan ID ${id} berhasil dihapus lokal!`);
       return true;
     } catch (err) {
-      console.error("❌ Dexie Delete Error:", err);
+      console.error(" Dexie Delete Error:", err);
       throw err;
     }
   },
@@ -164,11 +161,15 @@ export const OfflineService = {
       { endpoint: 'map/offtaker', table: db.offtakers},
       { endpoint: 'distribusi/panen', table: db.distributions},
       // { endpoint: 'map/validator', table: db.validators}
+      { table: db.villages, to: "desa-kelurahan", endpoint: "master/desa-kelurahan" },
+      { table: db.districts, to: "kecamatan", endpoint: "master/kecamatan"},
+      { table: db.regencies, to: "kabupaten-kota", endpoint: "master/kabupaten-kota"},
+      { table: db.provinces, to: "provinsi", endpoint: "master/provinsi"},
 
     ];
 
     try {
-      console.log("📥 Mendownload data terbaru dari server...");
+      // console.log("📥 Mendownload data terbaru dari server...");
       for(const config of syncConfigs){
         const respond = await axios.get(`${baseURL}/api/${config.endpoint}`, {
           headers: { Authorization: `Bearer ${token}` }
@@ -184,12 +185,12 @@ export const OfflineService = {
               sync_status: 'synced'
             })));
           }else {
-            console.log(`✅ Data ${config.endpoint} sudah mutakhir (tidak ada data baru).`);
+            // console.log(` Data ${config.endpoint} sudah mutakhir (tidak ada data baru).`);
           }
         }
       }
       
-      console.log("Data lokal berhasil diperbarui.");
+      // console.log("Data lokal berhasil diperbarui.");
     } catch (err) {
       console.error("Gagal download data:", err);
     }
@@ -204,6 +205,10 @@ export const OfflineService = {
       { endpoint: 'map/offtaker', to:"offtaker", from: db.offtakers},
       { endpoint: 'distribusi/panen', to:"panen", from: db.distributions},
       // { endpoint: 'map/validator', to:"validator", from: db.validators}
+      { from: db.villages, to: "desa-kelurahan", endpoint: "master/desa-kelurahan" },
+      { from: db.districts, to: "kecamatan", endpoint: "master/kecamatan"},
+      { from: db.regencies, to: "kabupaten-kota", endpoint: "master/kabupaten-kota"},
+      { from: db.provinces, to: "provinsi", endpoint: "master/provinsi"},
     ];
 
     const token = localStorage.getItem('access_token');
@@ -227,7 +232,7 @@ export const OfflineService = {
 
           if (response.status === 200 || response.status === 201) {
             await item.table.delete(record.id);
-            console.log(`Synced & Deleted Local ID: ${record.id}`);
+            // console.log(`Synced & Deleted Local ID: ${record.id}`);
             hasChanged = true;
           }
         } catch (e) {
@@ -240,7 +245,7 @@ export const OfflineService = {
       }
     }
     if (hasChanged) {
-      console.log("🔄 Memicu download data terbaru agar Dexie sinkron dengan Server...");
+      // console.log(" Memicu download data terbaru agar Dexie sinkron dengan Server...");
       await OfflineService.downloadFromServer();
     }
   },

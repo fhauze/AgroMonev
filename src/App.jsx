@@ -66,7 +66,6 @@ const AuthenticatedApp = () => {
 
   function ProtectedLayout() {
     const { token } = useAuth();
-    console.log("token on app", token)
     if (!token) {
       return <Navigate to="/login" replace />;
     }

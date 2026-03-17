@@ -12,7 +12,6 @@ export default function SyncStatusBar({ compact = false }) {
   const { syncing, lastSync, forceSync } = useSyncManager();
   const [online, setOnline] = useState(false);
   const [pendingCount, setPendingCount] = useState()
-  // const pendingCount = OfflineService.getPendingCount();
 
   useEffect(() => {
      const controller = new AbortController();

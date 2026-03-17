@@ -1,7 +1,10 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
+import { db } from "@/utils/db";
+import CryptoJS from 'crypto-js';
 
 const AuthContext = createContext();
+const SECRET_KEY = import.meta.env.VITE_CRYPTO_KEY || "Pr08ind0";
 
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(
@@ -17,6 +20,15 @@ export const AuthProvider = ({ children }) => {
     return url.replace(/\/+$/, "").replace(/\/api$/, "");
   };
 
+  const encryptPassword = (password) => {
+    return CryptoJS.AES.encrypt(password, SECRET_KEY).toString();
+  };
+
+  const decryptPassword = (hashedPassword) => {
+    const bytes = CryptoJS.AES.decrypt(hashedPassword, SECRET_KEY);
+    return bytes.toString(CryptoJS.enc.Utf8);
+  };
+
   useEffect(() => {
     checkInitialState();
   }, []);
@@ -25,12 +37,20 @@ export const AuthProvider = ({ children }) => {
     try {
       setIsLoadingAuth(true);
       const localToken = localStorage.getItem('access_token');
-      const localUser = localStorage.getItem('user_data');
-      
-      if (localToken && localUser) {
-        setUser(JSON.parse(localUser));
+
+      if (!db.isOpen()) await db.open();
+      const localUsers = await db.users.toArray();
+      const storedUser = localUsers.length > 0 ? localUsers[0] : null;
+
+      if (localToken && storedUser) {
+        setUser(storedUser);
         setIsAuthenticated(true);
       }
+      
+      // if (localToken && localUser) {
+      //   setUser(JSON.parse(localUser));
+      //   setIsAuthenticated(true);
+      // }
 
       if (navigator.onLine && localToken) {
         try {
@@ -40,6 +60,7 @@ export const AuthProvider = ({ children }) => {
 
           const freshUser = response.data;
           setUser(freshUser);
+          await db.users.put({ ...freshUser, sync_status: 'synced' });
           localStorage.setItem('user_data', JSON.stringify(freshUser));
         } catch (e) {
           if (e.response?.status === 401) {
@@ -55,25 +76,59 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (email, password) => {
-    try {
-      setIsLoadingAuth(true);
+    setIsLoadingAuth(true);
+    
+    try{
+
       const response = await axios.post(`${getBaseUrl()}/api/auth/login`, {
         email,
         password
       });
 
-      const { access_token, user: userData } = response.data;
+      const { access_token} = response.data;
+      const userResponse = await axios.get(`${getBaseUrl()}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${access_token}` }
+      });
+      const userData = userResponse.data;
 
       localStorage.setItem('access_token', access_token);
-      localStorage.setItem('user_data', JSON.stringify(userData));
+      setToken(access_token);
+
+      if (!db.isOpen()) await db.open();
+      const encryptedPW = encryptPassword(password);
+
+      await db.users.put({
+        id: userData.id || userData.user_id,
+        ...userData,
+        password:encryptedPW,
+        sync_status: 'synced',
+        last_login: new Date().toISOString()
+      });
 
       setUser(userData);
       setIsAuthenticated(true);
       return { success: true };
     } catch (error) {
+      console.log(error, "Warning error")
+      try {
+        if (!db.isOpen()) await db.open();
+        const localUser = await db.users.where("email").equals(email).first();
+
+        if (localUser && localUser.password) {
+          const decryptedPW = decryptPassword(localUser.password);
+          if (decryptedPW === password) {
+            setUser(localUser);
+            setIsAuthenticated(true);
+            return { success: true, isOffline: true };
+          }
+        }
+      } catch (dexieErr) {
+        console.error("Gagal membaca database lokal", dexieErr);
+      }
+      
       return { 
         success: false, 
-        message: error.response?.data?.message || 'Login gagal. Cek koneksi Anda.' 
+        message: error.response?.data?.message || 'Login gagal. Periksa koneksi atau data lokal Anda.' 
       };
     } finally {
       setIsLoadingAuth(false);

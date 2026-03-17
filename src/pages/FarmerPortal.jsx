@@ -20,14 +20,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { 
   User, Map as MapIcon, TreePine, Plus, LogOut, CheckCircle, Clock, Truck,
   Edit, Loader2, MapPin, Phone, Users as UsersIcon, ClipboardCheck, AlertTriangle, Bug, Send, Package,
-  Save, Edit2, CreditCard, FileText
+  Save, CreditCard, FileText
 } from "lucide-react";
 import PlantInspectionForm from "@/components/plants/PlantInspectionForm";
 import DistributionForm from "@/components/distribution/DistributionForm";
 import HarvestForm  from "@/components/harvest/HarvestForm";
 import { toast } from "sonner";
 import { motion, sync } from "framer-motion";
-import { useLocation } from 'react-router-dom';
 import { OfflineService } from "@/components/common/offlineStorage";
 
 
@@ -403,6 +402,8 @@ export default function FarmerPortal() {
 
   // profile control
   const handleToggleEdit = async () => {
+    const [file, setFile] = useState();
+    
     if (isEditing) {
       try {
         if(selectedKtp){
@@ -898,7 +899,7 @@ export default function FarmerPortal() {
                       size="sm" 
                       onClick={() => setIsEditing(true)}
                     >
-                      <Edit2 className="w-4 h-4 mr-2" /> Edit Profil
+                      <Edit className="w-4 h-4 mr-2" /> Edit Profil
                     </Button>
                   )}
                 </div>

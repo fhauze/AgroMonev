@@ -15,6 +15,9 @@ db.version(1).stores({
   profile: 'id,user_id, kk,ktp,email, sync_status, name, nama',
   harvest: 'id, plant_id, land_id,farmer_id, sync_status',
   plant_inspections: 'id, plant_id, land_id, farmer_id, sync_status',
-  master_villages: 'id, district_id, name',
-  distributions: 'id, farmer_id,offtaker_id, sync_status'
+  distributions: 'id, farmer_id,offtaker_id, sync_status',
+  villages: 'id, name',
+  districts: 'id, name',
+  regencies: 'id, name',
+  provinces: 'id, name'
 });

@@ -128,8 +128,15 @@ export default function LandDetail() {
         console.warn("Server unreachable, searching locally...");
       }
       
-      const localData = await OfflineService.getEntities("lands", { id: id });
+      const localData = await OfflineService.getEntities("lands");
+      
       if (localData && localData.length > 0) {
+        localData.map((data) => {
+          const isOwned = data.id === paramsId;
+          if(isOwned){
+            return isOwned;
+          }
+        })
         return { ...localData[0], isOffline: true };
       }
       throw new Error("Lahan tidak ditemukan");
@@ -270,7 +277,7 @@ export default function LandDetail() {
       });
     }
   }, [land, isEditing]);
-
+  console.log(land, "Data lahan");
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">

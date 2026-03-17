@@ -15,12 +15,11 @@ export function useSyncManager() {
       const hasPending = await OfflineService.hasPendingData();
 
       if (hasPending) {
-        console.log("📤 Memulai Push Sinkronisasi...");
+        // console.log("📤 Memulai Push Sinkronisasi...");
         await OfflineService.syncAllPending();
         toast.success("Sinkronisasi data berhasil");
       } else {
-        // 2. Jika tidak ada pending, ambil data terbaru (PULL)
-        console.log("🔄 Data lokal bersih. Melakukan Pull dari server...");
+        // console.log("🔄 Data lokal bersih. Melakukan Pull dari server...");
         await OfflineService.downloadFromServer();
       }
     } catch (error) {
@@ -35,7 +34,6 @@ export function useSyncManager() {
     const handleOnline = () => {
       setOnline(true);
       toast.success("Koneksi internet tersambung");
-      console.log("Check Online Status")
       syncPendingData();
     };
     const handleOffline = () => {
@@ -81,7 +79,7 @@ export function useSyncManager() {
     setSyncing(true);
     try {
       // await OfflineService.syncAll(base44);
-      
+    
       const count = await OfflineService.getPendingCount();
       setPendingCount(count);
     } catch (error) {

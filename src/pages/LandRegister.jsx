@@ -166,7 +166,6 @@ export default function LandRegister() {
   // };
 
   const handlePolygonSave = (polygonData) => {
-    // Pastikan data adalah angka murni, bukan objek LatLng Leaflet
     const cleanCoordinates = JSON.parse(JSON.stringify(polygonData.polygon_coordinates));
     console.log(cleanCoordinates)
     setFormData(prev => ({

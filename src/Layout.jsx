@@ -126,9 +126,9 @@ export default function Layout({ children, currentPageName }) {
   const location = useLocation();
   const { user, logout } = useAuth();
 
-  if (!user) {
-    return <div className="flex h-screen items-center justify-center">Memuat Sesi...</div>;
-  }
+  // if (!user) {
+  //   return <div className="flex h-screen items-center justify-center">Memuat Sesi...</div>;
+  // }
   
   const filteredNavigation = navigation.filter((item) => {
     if (!user?.role) return false;
@@ -142,7 +142,7 @@ export default function Layout({ children, currentPageName }) {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 pt-safe h-16 bg-white border-b border-slate-200 z-50 flex items-center justify-between px-4">
+      <div className="lg:hidden fixed top-0 left-0 right-0 pt-safe h-[6rem] bg-white border-b border-slate-200 z-50 flex items-center justify-between px-4">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)}>
             <Menu className="w-6 h-6" />

@@ -4,47 +4,28 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { TreePine, Lock, Mail, Loader2 } from "lucide-react";
+import { TreePine, Lock, Mail, Loader2, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/lib/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [user, setUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  const dataToken = localStorage.getItem('access_token')
-
-  console.log(dataToken);
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    try {
-      const response = await base44.post("/auth/login", {
-        email,
-        password,
-      });
-
-      const data = response.data;
-      console.log(response,data)
-      if (data.access_token) {
-        // setUser(userData);
-        setIsAuthenticated(true);
-
-        localStorage.setItem('access_token', data.access_token);
-        // localStorage.setItem('user_data', JSON.stringify(userData));
-
-        toast.success("Login berhasil!");
-        window.location.href = "/";
-      } else {
-        toast.error("Email atau password salah");
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Terjadi kesalahan saat login");
-    } finally {
+    const result = await login(email, password);
+    if (result.success) {
+      toast.success("Login berhasil!");
+      navigate("/ProductivityMonitoring"); 
+    } else {
+      toast.error(result.message);
       setIsSubmitting(false);
     }
   };
@@ -105,7 +86,10 @@ export default function Login() {
             </Button>
           </form>
           <div className="mt-6 text-center text-sm text-slate-500">
-            Lupa password? Silakan hubungi admin koperasi.
+            Belum punya akun ? {" "}
+            <a href="/register" className="text-emerald-600 font-semibold hover:underline inline-flex items-center">
+              Daftar di sini <ArrowRight className="ml-1 h-3 w-3" />
+            </a>
           </div>
         </CardContent>
       </Card>

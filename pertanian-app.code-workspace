@@ -8,6 +8,9 @@
 		},
 		{
 			"path": "../siks"
+		},
+		{
+			"path": "../pertamina-point"
 		}
 	],
 	"settings": {}
