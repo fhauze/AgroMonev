@@ -42,8 +42,6 @@ export const OfflineService = {
         payload: record,
         created_at: new Date().toISOString()
       });
-
-      // console.log(`✅ Dexie: Data ${entityType} tersimpan aman!`);
       return id;
     } catch (err) {
       console.error("❌ Dexie Error:", err);
@@ -53,7 +51,6 @@ export const OfflineService = {
 
   getEntities: async (entityType, filter = {}) => {
     const user = localStorage.getItem('user_data')
-    // console.log("Data user :", user)
     try {
       if (!entityType) return [];
       const table = entityType.toLowerCase().endsWith('s') 
@@ -76,15 +73,13 @@ export const OfflineService = {
       if(invalidData.length > 0){
         const idsToDelete = invalidData.map(d => d.id);
         await dbTable.bulkDelete(idsToDelete);
-        // console.log(`Cleanup: Menghapus ${invalidData.length} data tanpa NIK dari ${table}`);
       }
       
       if (filter && typeof filter === 'object' && Object.keys(filter).length > 0) {
-        // console.log(`Fetching ${table} with filter:`, filter);
         return await dbTable.where(filter).toArray();
       }
       
-      // console.log(`Fetching ...... all from ${table}`);
+      console.log(`Fetching ...... all from ${table}`);
       return await dbTable.reverse().toArray();
 
     } catch (e) {
@@ -125,7 +120,6 @@ export const OfflineService = {
         created_at: new Date().toISOString()
       });
 
-      // console.log(`Dexie: Data ${entityType} dengan ID ${id} berhasil dihapus lokal!`);
       return true;
     } catch (err) {
       console.error(" Dexie Delete Error:", err);
@@ -137,12 +131,10 @@ export const OfflineService = {
     for (const item of queue) {
       try {
         const endpoint = `/${item.entity_type.toLowerCase()}s`;
-        // Kirim langsung via Axios, bypass SDK Base44
         const response = await agroApi.post(endpoint, item.payload);
         
         if (response.status === 200 || response.status === 201) {
           await db.pending_sync.delete(item.id);
-          // update local status...
         }
       } catch (err) {
         console.error("Detail Error:", err.response?.data || err.message);
@@ -171,7 +163,6 @@ export const OfflineService = {
     ];
 
     try {
-      // console.log("📥 Mendownload data terbaru dari server...");
       for(const config of syncConfigs){
         const respond = await axios.get(`${baseURL}/api/${config.endpoint}`, {
           headers: { Authorization: `Bearer ${token}` }
@@ -191,8 +182,7 @@ export const OfflineService = {
           }
         }
       }
-      
-      // console.log("Data lokal berhasil diperbarui.");
+
     } catch (err) {
       console.error("Gagal download data:", err);
     }
@@ -234,7 +224,6 @@ export const OfflineService = {
 
           if (response.status === 200 || response.status === 201) {
             await item.table.delete(record.id);
-            // console.log(`Synced & Deleted Local ID: ${record.id}`);
             hasChanged = true;
           }
         } catch (e) {
@@ -247,7 +236,6 @@ export const OfflineService = {
       }
     }
     if (hasChanged) {
-      // console.log(" Memicu download data terbaru agar Dexie sinkron dengan Server...");
       await OfflineService.downloadFromServer();
     }
   },
