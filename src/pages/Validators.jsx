@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import  base44  from "@/api/Client";
+import { entity } from "@/api/entities";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,10 +56,11 @@ export default function Validators() {
 
   const { data: validators = [], isLoading, error } = useQuery({
     queryKey: ["validators"],
-    queryFn: () => {
+    queryFn: async () => {
       try{
-        const res = base44.entities.Validator.list();
-        return Array.isArray(res) ? res : [];
+        const res = await entity('manajemen', 'fasilitator').list();
+        console.log(res.data.data)
+        return Array.isArray(res?.data) ? res?.data  : Array.isArray(res?.data.data) ? res.data.data : [];
       }catch(ex){
         return [];
       }
@@ -78,8 +80,9 @@ export default function Validators() {
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
+      console.log(data, "Data to server");
       try{
-        const actServer = base44.entities.Validator.create(data);
+        const actServer = entity('manajemen', 'fasilitator').create(data);
         if(typeof actServer === 'string' && actServer.includes('<!doctype html')){
           throw new Error('Data is HTML file, not a good responds');
         }
@@ -165,6 +168,7 @@ export default function Validators() {
                       <SelectItem value="kepala_dusun">Kepala Dusun</SelectItem>
                       <SelectItem value="rt">Ketua RT</SelectItem>
                       <SelectItem value="rw">Ketua RW</SelectItem>
+                      <SelectItem value="faciltator">Facilitator</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

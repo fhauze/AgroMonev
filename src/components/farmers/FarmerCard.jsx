@@ -12,18 +12,19 @@ const statusColors = {
 };
 
 const statusLabels = {
-  pending: "Menunggu Verifikasi",
-  verified: "Terverifikasi",
-  rejected: "Ditolak"
+  pending: "W",
+  verified: "V",
+  rejected: "X"
 };
 
 export default function FarmerCard({ farmer }) {
+  console.log("Petani : ", farmer);
   return (
     <Card className="border-0 shadow-sm hover:shadow-md transition-all p-5 bg-white group">
       <div className="flex items-start gap-4">
         <div className="w-14 h-14 rounded-full bg-gradient-to-br from-emerald-100 to-emerald-200 flex items-center justify-center flex-shrink-0">
           {farmer.photo_url ? (
-            <img src={farmer.photo_url} alt={farmer.full_name} className="w-full h-full rounded-full object-cover" />
+            <img src={farmer.photo_url} alt={farmer?.name || farmer?.nama || '-'} className="w-full h-full rounded-full object-cover" />
           ) : (
             <span className="text-xl font-bold text-emerald-700">
               {farmer.full_name?.charAt(0)?.toUpperCase() || "P"}
@@ -34,18 +35,18 @@ export default function FarmerCard({ farmer }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2 mb-2">
             <div>
-              <h3 className="font-semibold text-slate-900 truncate">{farmer.full_name}</h3>
-              <p className="text-sm text-slate-500">NIK: {farmer.nik}</p>
+              <h3 className="font-semibold text-slate-900 truncate">{farmer?.full_name || farmer?.name || farmer?.nama }</h3>
+              <p className="text-sm text-slate-500">NIK: {farmer?.kk}</p>
             </div>
-            <Badge className={`${statusColors[farmer.verification_status]} border font-medium text-xs`}>
-              {statusLabels[farmer.verification_status]}
+            <Badge className={`${statusColors[farmer.user.email_verified_at !== null || farmer.user.email_verified_at !== undefined ? 'verified' : 'pending']} border font-medium text-xs`}>
+              {statusLabels[farmer.user.email_verified_at !== null || farmer.user.email_verified_at !== undefined ? 'verified' : 'pending']}
             </Badge>
           </div>
           
           <div className="space-y-1.5 text-sm text-slate-600">
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4 text-slate-400" />
-              <span className="truncate">{farmer.village}, {farmer.district}</span>
+              <span className="truncate">{farmer.alamat}</span>
             </div>
             {farmer.farmer_group && (
               <div className="flex items-center gap-2">
@@ -53,10 +54,10 @@ export default function FarmerCard({ farmer }) {
                 <span className="truncate">{farmer.farmer_group}</span>
               </div>
             )}
-            {farmer.phone && (
+            {farmer.telepon && (
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-slate-400" />
-                <span>{farmer.phone}</span>
+                <span>{farmer?.telepon}</span>
               </div>
             )}
           </div>

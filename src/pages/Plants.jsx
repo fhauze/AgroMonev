@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TreePine, Search, Filter, MapPin, Calendar, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
+import { entity } from "@/api/entities";
 
 const statusColors = {
   alive: "bg-emerald-100 text-emerald-700 border-emerald-200",
@@ -34,17 +35,26 @@ export default function Plants() {
 
   const { data: rawplants = [], isLoading } = useQuery({
     queryKey: ["plants"],
-    queryFn: () => base44.entities.Plant.list("-created_date")
+    queryFn: async() => {
+      const rawData = await entity('map', 'tanaman').list();
+      const data = Array.isArray(rawData?.data) ? rawData?.data : Array.isArray(rawData?.data?.data) ? rawData?.data?.data: [];
+      
+      return data;
+    }
   });
 
   const { data: rawlands = [] } = useQuery({
     queryKey: ["lands"],
-    queryFn: () => base44.entities.Land.list()
+    queryFn: async() => {
+      const rawData = await entity('map', 'lahan').list();
+      const data = Array.isArray(rawData?.data) ? rawData?.data : Array.isArray(rawData?.data?.data) ? rawData?.data?.data : [];
+      return data;
+    }
   });
 
   const { data: rawfarmers = [] } = useQuery({
     queryKey: ["farmers"],
-    queryFn: () => base44.entities.Farmer.list()
+    queryFn: async() => await entity('auth', 'profile').list()
   });
 
   const lands = Array.isArray(rawlands) ? rawlands : [];
@@ -83,7 +93,7 @@ export default function Plants() {
 
   //   return matchSearch && matchStatus && matchCommodity;
   // });
-
+  
   const filteredPlants = useMemo(() => {
     const searchTerm = search.toLowerCase();
     return plants.filter(plant => {
@@ -91,7 +101,7 @@ export default function Plants() {
 
       const matchSearch = !search || 
         plant.commodity_name?.toLowerCase().includes(searchTerm) ||
-        landMap[plant.land_id]?.name?.toLowerCase().includes(searchTerm) ||
+        landMap[plant.land_id]?.nama?.toLowerCase().includes(searchTerm) ||
         farmerMap[plant.farmer_id]?.toLowerCase().includes(searchTerm);
       
       const matchStatus = statusFilter === "all" || plant.status === statusFilter;
@@ -112,7 +122,7 @@ export default function Plants() {
   const groupedByCommodity = useMemo(() => {
     const groups = {};
     filteredPlants.forEach(plant => {
-      const key = plant.commodity_name || "Lainnya";
+      const key = plant?.nama || plant?.commodity_name || "Lainnya";
       if (!groups[key]) groups[key] = [];
       groups[key].push(plant);
     });
@@ -256,7 +266,7 @@ export default function Plants() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {commodityPlants.map((plant, idx) => {
-                    const land = landMap[plant.land_id];
+                    const land = landMap[plant.lahan.id];
                     return (
                       <motion.div
                         key={plant.id}
@@ -268,12 +278,12 @@ export default function Plants() {
                           <div className="flex items-start justify-between mb-3">
                             <div className="flex items-center gap-2">
                               <div className={`w-2 h-2 rounded-full ${
-                                plant.status === "alive" ? "bg-emerald-500" :
+                                plant.kondisi_tanaman === "alive" ? "bg-emerald-500" :
                                 plant.status === "sick" ? "bg-amber-500" :
-                                plant.status === "harvested" ? "bg-blue-500" : "bg-slate-400"
+                                plant.status === "harvested" ? "bg-blue-500" : "bg-emerald-400"
                               }`} />
-                              <Badge className={`${statusColors[plant.status]} border text-xs font-medium`}>
-                                {statusLabels[plant.status]}
+                              <Badge className={`${statusColors[plant.status ?? 'alive']} border text-xs font-medium`}>
+                                {statusLabels[plant.status ?? 'alive']}
                               </Badge>
                             </div>
                           </div>
@@ -281,11 +291,11 @@ export default function Plants() {
                           <div className="space-y-2 text-sm">
                             <div className="flex items-center gap-2 text-slate-600">
                               <MapPin className="w-4 h-4 text-slate-400" />
-                              <span className="truncate">{land?.name || "Lahan tidak diketahui"}</span>
+                              <span className="truncate">{land?.nama || land?.name || "Lahan tidak diketahui"}</span>
                             </div>
                             <div className="flex items-center gap-2 text-slate-600">
                               <Calendar className="w-4 h-4 text-slate-400" />
-                              <span>{plant.plant_date ? format(new Date(plant.plant_date), "dd MMM yyyy") : "-"}</span>
+                              <span>{plant.created_at ? format(new Date(plant.created_at), "dd MMM yyyy") : "-"}</span>
                             </div>
                           </div>
 

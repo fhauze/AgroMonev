@@ -60,7 +60,7 @@ const navigation = [
   { name: "Lahan", page: "Lands", icon: Map },
   { name: "Tanaman", page: "Plants", icon: TreePine },
   { name: "Produktivitas", page: "ProductivityMonitoring", icon: LayoutDashboard },
-  { name: "Validator", page: "Validators", icon: Shield },
+  { name: "Facilitator", page: "Validators", icon: Shield },
   { name: "Offtaker", page: "Offtakers", icon: Users },
   { name: "Portal Petani", page: "FarmerPortal", icon: Users },
   { name: "Portal Validator", page: "ValidatorPortal", icon: Shield },

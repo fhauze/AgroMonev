@@ -12,6 +12,7 @@ import EmptyState from "@/components/common/EmptyState";
 import { Package, Plus, Phone, MapPin, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { entity } from "@/api/entities";
 
 export default function Offtakers() {
   const queryClient = useQueryClient();
@@ -27,10 +28,11 @@ export default function Offtakers() {
 
   const { data: offtakers = [], isLoading } = useQuery({
     queryKey: ["offtakers"],
-    queryFn: () => {
+    queryFn: async() => {
       try{
-        const data = base44.entities.Offtaker.list();
-        return Array.isArray(data) ?  data : [];
+        const dataRaw = await entity('map', 'offtaker').list();
+        const data = Array.isArray(dataRaw) ?  dataRaw : Array.isArray(dataRaw?.data) ? dataRaw?.data : Array.isArray(dataRaw?.data?.data) ? dataRaw?.data?.data : [];
+        return data;
       }catch(e){
         return [];
       }

@@ -19,7 +19,7 @@ function SyncIndicator() {
 
     const updateStatus = async () => {
       const isConnected = await checkInternet();
-      const count = await OfflineService.getPendingCount(); // Ambil dari SQLite
+      const count = await OfflineService.getPendingCount();
       
       if (mounted) {
         setOnline(isConnected);
@@ -94,7 +94,6 @@ async function checkInternet() {
   try {
     const controller = new AbortController();
     setTimeout(() => controller.abort(), 3000);
-    // Gunakan favicon google sebagai probe yang ringan
     await fetch("https://www.google.com/favicon.ico", {
       method: "HEAD",
       mode: "no-cors",
@@ -109,16 +108,16 @@ async function checkInternet() {
 
 
 const navigation = [
-  { name: "Dashboard", page: "Dashboard", icon: LayoutDashboard , roles: ['super_admin']},
-  { name: "Petani", page: "Farmers", icon: Users, roles: ['super_admin'] },
-  { name: "Lahan", page: "Lands", icon: Map, roles: ['super_admin'] },
-  { name: "Tanaman", page: "Plants", icon: TreePine, roles: ['super_admin'] },
-  { name: "Produktivitas", page: "ProductivityMonitoring", icon: LayoutDashboard, roles: ['super_admin', 'petani'] },
-  { name: "Validator", page: "Validators", icon: Shield, roles: ['super_admin'] },
-  { name: "Offtaker", page: "Offtakers", icon: Users, roles: ['super_admin'] },
-  { name: "Portal Petani", page: "FarmerPortal", icon: Users, roles: ['super_admin', 'petani'] },
-  { name: "Portal Validator", page: "ValidatorPortal", icon: Shield, roles: ['super_admin'] },
-  { name: "Portal Offtaker", page: "OfftakerPortal", icon: Users, roles: ['super_admin'] },
+  { name: "Dashboard", page: "Dashboard", icon: LayoutDashboard , roles: ['super_admin','fasilitator']},
+  { name: "Petani", page: "Farmers", icon: Users, roles: ['super_admin','fasilitator'] },
+  { name: "Lahan", page: "Lands", icon: Map, roles: ['super_admin','fasilitator'] },
+  { name: "Tanaman", page: "Plants", icon: TreePine, roles: ['super_admin','fasilitator'] },
+  { name: "Produktivitas", page: "ProductivityMonitoring", icon: LayoutDashboard, roles: ['super_admin', 'petani','fasilitator'] },
+  { name: "Facilitator", page: "Validators", icon: Shield, roles: ['super_admin','fasilitator'] },
+  { name: "Offtaker", page: "Offtakers", icon: Users, roles: ['super_admin','fasilitator'] },
+  { name: "Portal Petani", page: "FarmerPortal", icon: Users, roles: ['super_admin', 'petani','fasilitator'] },
+  { name: "Portal Validator", page: "ValidatorPortal", icon: Shield, roles: ['super_admin','fasilitator'] },
+  { name: "Portal Offtaker", page: "OfftakerPortal", icon: Users, roles: ['super_admin','fasilitator'] },
 ];
 
 export default function Layout({ children, currentPageName }) {
@@ -148,8 +147,9 @@ export default function Layout({ children, currentPageName }) {
             <Menu className="w-6 h-6" />
           </Button>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center">
-              <TreePine className="w-5 h-5 text-white" />
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br flex items-center justify-center">
+              {/* <TreePine className="w-5 h-5 text-white" /> */}
+              <img src="/logo1.png" alt="" />
             </div>
             <span className="font-bold text-slate-900">AgroMonev</span>
           </div>
@@ -173,8 +173,9 @@ export default function Layout({ children, currentPageName }) {
         <div className="p-6">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/25">
-                <TreePine className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br flex items-center justify-center shadow-lg shadow-emerald-500/25">
+                {/* <TreePine className="w-6 h-6 text-white" /> */}
+                <img src="/logo1.png" alt="" />
               </div>
               <div>
                 <h1 className="font-bold text-slate-900">AgroMonev</h1>

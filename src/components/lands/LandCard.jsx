@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { MapPin, Maximize2, TreePine, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { entity } from "@/api/entities";
+import { OfflineService } from "../common/offlineStorage";
+import { useEffect, useState } from "react";
 
 const validationColors = {
   valid: "bg-emerald-100 text-emerald-700 border-emerald-200",
@@ -27,15 +30,26 @@ const statusColors = {
 };
 
 export default function LandCard({ land, farmerName, plantCount = 0 }) {
+  const [village, setVillage] = useState();
+
+  useEffect(() => {
+    const fetchVillages = async () => {
+      const villages = await OfflineService.getEntities('villages');
+      const findvillage = villages.find(data => data.id === land.desa_kelurahan_id);
+      
+      setVillage(findvillage);
+    };
+    fetchVillages();
+  });
+  
   return (
     <Card className="border-0 shadow-sm hover:shadow-md transition-all p-5 bg-white group">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h3 className="font-semibold text-slate-900">{land.nama}</h3>
+          <h3 className="font-semibold text-slate-900">{land.nama || land?.name}</h3>
           {farmerName && <p className="text-sm text-slate-500">{farmerName}</p>}
         </div>
-        <Badge className={`${validationColors[land.validation_status]} border font-medium text-xs`}>
-          {validationLabels[land.validation_status]}
+        <Badge className={`bg-emerald-600 border font-medium text-xs`}> Lahan
         </Badge>
       </div>
 
@@ -61,7 +75,7 @@ export default function LandCard({ land, farmerName, plantCount = 0 }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm text-slate-500">
           <MapPin className="w-4 h-4" />
-          <span className="truncate">{land.village || land.desa_kelurahan_id }, {land.district || 'Unknown'}</span>
+          <span className="truncate">{village?.nama || village?.name || land.desa_kelurahan_id }</span>
         </div>
         <Link to={createPageUrl("LandDetail") + `?id=${land.id}`}>
           <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity text-emerald-600">

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import  base44  from "@/api/Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,19 +40,37 @@ const issueLabels = {
 export default function ProductivityMonitoring() {
   const [filterLevel, setFilterLevel] = useState("regency");
   const [selectedRegion, setSelectedRegion] = useState("all");
+  
+  // Reset selected region when filter level changes
+  useEffect(() => {
+    setSelectedRegion("all");
+  }, [filterLevel]);
+
+  const getMe = async() => {
+    const resp = await entity('auth', 'profile/1').list();
+    const me = resp.data;
+    return me;
+  };
+
 
   const {data: rawLands = []} = useQuery({
     queryKey: ['lands'],
     queryFn: async () => {
+      let me;
       let dataServer = [];
       try{
+        me = await getMe();
+
         const res = await entity('map', 'lahan').list();
-        dataServer = Array.isArray(res.data) ? res.data : [];
+        const data = res.data;
+        dataServer = Array.isArray(data) ? data.filter((land) => land.profile_id === me.id) : [];
         
       }catch(err){
         console.error(err)
       }
-      const localData = await OfflineService.getEntities('lands');
+      const localRes = await OfflineService.getEntities('lands');
+      const localData = localRes.filter((data) => data.profile_id === me.id);
+
       const combined = new Map();
       dataServer.forEach(d => {
         if (d.id) combined.set(d.id, { ...d, storage: 'server' });
@@ -71,15 +89,28 @@ export default function ProductivityMonitoring() {
     }
   });
 
+  const { data: villages = []} = useQuery({
+    queryKey: ['villages'],
+    queryFn: async () => {
+      const resp = await OfflineService.getEntities('villages');
+      
+      return resp||resp?.data || resp?.data?.data || [];
+    }
+  });
+
   const {data: rawPlants = []} = useQuery({
     queryKey: ['plants'],
     queryFn: async () => {
       let data = [];
+      let me;
       try{
+        me = await getMe();
+        console.log(me, "Med")
         const res = await entity('map', 'tanaman').list();
-        data = Array.isArray(res.data.data) ? res.data.data :[];
+        if(me){data = Array.isArray(res.data.data) ? res.data.data.filter((data) => data.profile_id === me.id) :[];}
       }catch(e){}
-      const local = await OfflineService.getEntities('plants');
+      let local = await OfflineService.getEntities('plants');
+      local = Array.isArray(local) ? local.filter((l) => l.profile_id === me.id) : [];
       const mapped = new Map();
       data.forEach(d => {
         if(d.id) mapped.set(d.id, {...d, storage:'server'})
@@ -93,18 +124,14 @@ export default function ProductivityMonitoring() {
   
   const lands = Array.isArray(rawLands) ? rawLands : [];
   const plants = Array.isArray(rawPlants) ? rawPlants : [];
-  
-  // const { data: harvests = [] } = useQuery({
-  //   queryKey: ["harvests"],
-  //   queryFn: () => base44.entities.Harvest.list()
-  // });
 
   const { data: rawHarvests = [] } = useQuery({
     queryKey: ["harvests"],
     queryFn: async () => {
       try {
         const res = await entity('map', 'panen').list();
-        return Array.isArray(res.data.data) ? res.data.data : [];
+        let harvests = res?.data || res?.data?.data || [];
+        return Array.isArray(harvests) ? harvests.filter((hr) => hr.profile_id === getMe.id) : [];
       } catch (e) {
         return [];
       }
@@ -114,29 +141,59 @@ export default function ProductivityMonitoring() {
   const harvests = Array.isArray(rawHarvests) ? rawHarvests : [];
 
   // Get unique regions
-  const regions = {
+  const regions = useMemo(() => ({
     regency: [...new Set(lands.map(l => l.regency).filter(Boolean))],
     district: [...new Set(lands.map(l => l.district).filter(Boolean))],
-    village: [...new Set(lands.map(l => l.village).filter(Boolean))]
-  };
+    village: filterLevel === "village" 
+      ? [...new Set([
+          ...villages.map(v => v.name || v.desa || v.village_name).filter(Boolean),
+          ...lands.map(l => l.village || l.village_name || l.desa || l.village_id).filter(Boolean)
+        ])]
+      : [...new Set(lands.map(l => l.village || l.village_name || l.desa || l.village_id).filter(Boolean))]
+  }), [lands, villages, filterLevel]);
+
+  // Create village mapping for proper filtering
+  const villageMapping = lands.reduce((acc, land) => {
+    const villageName = land.village || land.village_name || land.desa || land.village_id;
+    const villageId = land.village_id || land.village;
+    if (villageName && villageId) {
+      acc[villageName] = villageId;
+    }
+    return acc;
+  }, {});
 
   // Filter data by region
   const filteredLands = selectedRegion === "all" 
     ? lands 
-    : lands.filter(l => l[filterLevel] === selectedRegion);
+    : filterLevel === "village" 
+      ? lands.filter(l => {
+          const villageName = l.village || l.village_name || l.desa || l.village_id;
+          const villageId = l.village_id || l.village;
+          return villageName === selectedRegion || villageId === selectedRegion;
+        })
+      : lands.filter(l => l[filterLevel] === selectedRegion);
   
   const filteredLandIds = filteredLands.map(l => l.id);
   const filteredPlants = plants.filter(p => filteredLandIds.includes(p.land_id || p.lahan_id));
-
-  // Calculate productivity stats
+  
   const calculateProductivityStats = () => {
     const totalLands = filteredLands.length;
-    if (totalLands === 0) return { avg: 0, distribution: [] };
-
+    if (totalLands === 0) return { avg: 0, distribution: [], harvestBasedAvg: 0, combinedAvg: 0 };
+    
     const landsWithProductivity = filteredLands.filter(l => l.productivity_percentage !== undefined);
-    const avgProductivity = landsWithProductivity.length > 0
+    const landBasedAvg = landsWithProductivity.length > 0
       ? landsWithProductivity.reduce((sum, l) => sum + (l.productivity_percentage || 0), 0) / landsWithProductivity.length
       : 0;
+
+    // Calculate harvest-based productivity
+    const harvestProductivity = calculateHarvestBasedProductivity();
+    
+    // Combined average (weighted)
+    const combinedAvg = landsWithProductivity.length > 0 && harvestProductivity.totalHarvests > 0
+      ? (landBasedAvg + harvestProductivity.avg) / 2
+      : landsWithProductivity.length > 0 
+        ? landBasedAvg 
+        : harvestProductivity.avg;
 
     const distribution = [
       { name: "Sangat Produktif (>80%)", value: filteredLands.filter(l => (l.productivity_percentage || 0) > 80).length, color: "#10b981" },
@@ -145,7 +202,65 @@ export default function ProductivityMonitoring() {
       { name: "Tidak Produktif (<40%)", value: filteredLands.filter(l => (l.productivity_percentage || 0) < 40).length, color: "#ef4444" }
     ];
 
-    return { avg: avgProductivity, distribution };
+    return { 
+      avg: landBasedAvg, 
+      distribution, 
+      harvestBasedAvg: harvestProductivity.avg,
+      combinedAvg,
+      harvestDetails: harvestProductivity
+    };
+  };
+
+  // Calculate harvest-based productivity
+  const calculateHarvestBasedProductivity = () => {
+    const filteredHarvests = harvests.filter(h => filteredLandIds.includes(h.land_id));
+    
+    if (filteredHarvests.length === 0) {
+      return { avg: 0, totalHarvests: 0, totalWeight: 0, landProductivity: [] };
+    }
+
+    // Group harvests by land
+    const harvestByLand = filteredHarvests.reduce((acc, harvest) => {
+      if (!acc[harvest.land_id]) {
+        acc[harvest.land_id] = { totalWeight: 0, harvestCount: 0 };
+      }
+      acc[harvest.land_id].totalWeight += harvest.weight_kg || 0;
+      acc[harvest.land_id].harvestCount++;
+      return acc;
+    }, {});
+
+    // Calculate productivity per land based on harvest weight vs land area
+    const landProductivity = Object.entries(harvestByLand).map(([landId, data]) => {
+      const land = filteredLands.find(l => l.id === landId);
+      const area = land?.area_hectares || 1; // Default to 1 hectare if not specified
+      const yieldPerHa = data.totalWeight / area;
+      
+      // Normalize to percentage (assuming 1000kg/ha as optimal yield)
+      const productivityPercentage = Math.min((yieldPerHa / 1000) * 100, 100);
+      
+      return {
+        landId,
+        landName: land?.name || `Lahan ${landId.slice(0, 8)}`,
+        area,
+        totalWeight: data.totalWeight,
+        harvestCount: data.harvestCount,
+        yieldPerHa,
+        productivityPercentage
+      };
+    });
+
+    const totalWeight = filteredHarvests.reduce((sum, h) => sum + (h.weight_kg || 0), 0);
+    const totalArea = landProductivity.reduce((sum, lp) => sum + lp.area, 0);
+    const overallYieldPerHa = totalArea > 0 ? totalWeight / totalArea : 0;
+    const avgProductivity = Math.min((overallYieldPerHa / 1000) * 100, 100);
+
+    return {
+      avg: avgProductivity,
+      totalHarvests: filteredHarvests.length,
+      totalWeight,
+      landProductivity,
+      overallYieldPerHa
+    };
   };
 
   // Calculate plant health stats
@@ -227,7 +342,13 @@ export default function ProductivityMonitoring() {
             <p className="text-slate-500">Pantau produktivitas lahan dan tanaman</p>
           </div>
           <div className="flex gap-3">
-            <Select value={filterLevel} onValueChange={(v) => { setFilterLevel(v); setSelectedRegion("all"); }}>
+            <Select value={filterLevel} onValueChange={(v) => { 
+              console.log('Filter level changed to:', v); 
+              console.log('Before setFilterLevel, current filterLevel:', filterLevel);
+              setFilterLevel(v); 
+              setSelectedRegion("all"); 
+              console.log('After setFilterLevel, new value should be:', v);
+            }}>
               <SelectTrigger className="w-40">
                 <SelectValue />
               </SelectTrigger>
@@ -261,7 +382,8 @@ export default function ProductivityMonitoring() {
                 </div>
                 <div>
                   <p className="text-sm text-slate-500">Avg Produktivitas</p>
-                  <p className="text-2xl font-bold text-slate-900">{productivityStats.avg.toFixed(0)}%</p>
+                  <p className="text-2xl font-bold text-slate-900">{productivityStats.combinedAvg.toFixed(0)}%</p>
+                  <p className="text-xs text-slate-400">Lahan: {productivityStats.avg.toFixed(0)}% | Panen: {productivityStats.harvestBasedAvg.toFixed(0)}%</p>
                 </div>
               </div>
             </CardContent>
@@ -301,8 +423,55 @@ export default function ProductivityMonitoring() {
                 <div>
                   <p className="text-sm text-slate-500">Bermasalah</p>
                   <p className="text-2xl font-bold text-slate-900">
-                    {filteredPlants.filter(p => p.issue_type && p.issue_type !== "none").length}
+                    
+                    {filteredPlants.filter(p => p?.kondisi_tanaman  === 'sakit').length}
                   </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Productivity Details */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="border-0 shadow-sm">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                  <BarChart3 className="w-5 h-5 text-purple-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-slate-500">Produktivitas Lahan</p>
+                  <p className="text-lg font-bold text-slate-900">{productivityStats.avg.toFixed(1)}%</p>
+                  <p className="text-xs text-slate-400">Berdasarkan data lahan</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-0 shadow-sm">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
+                  <Leaf className="w-5 h-5 text-orange-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-slate-500">Produktivitas Panen</p>
+                  <p className="text-lg font-bold text-slate-900">{productivityStats.harvestBasedAvg.toFixed(1)}%</p>
+                  <p className="text-xs text-slate-400">{productivityStats.harvestDetails?.totalWeight || 0}kg dari {productivityStats.harvestDetails?.totalHarvests || 0} panen</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-0 shadow-sm">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-teal-100 flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-teal-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-slate-500">Rata-rata Hasil/Ha</p>
+                  <p className="text-lg font-bold text-slate-900">{productivityStats.harvestDetails?.overallYieldPerHa?.toFixed(0) || 0} kg</p>
+                  <p className="text-xs text-slate-400">Total produktivitas per hektar</p>
                 </div>
               </div>
             </CardContent>

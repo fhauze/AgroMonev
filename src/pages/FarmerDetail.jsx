@@ -43,9 +43,10 @@ export default function FarmerDetail() {
     queryKey: ['farmer', id],
     queryFn: async (data) => {
       if(!id) return null;
-
+      console.log(id, paramsId);
       try{
-        const response = await entity('farmer').get(id);
+        const response = await entity('map','petani').get(id);
+        console.log(response);
         if (typeof response === 'string' && response.includes('<!doctype html>')) {
           console.warn("API returned HTML instead of JSON. Falling back to local.");
         } else if (response && !response.error) {
@@ -137,7 +138,7 @@ export default function FarmerDetail() {
 
   const verifyMutation = useMutation({
     mutationFn: async (status) => {
-      console.log("Data dari Verifikais :", [status, id])
+      
       try {
         const onlineUpdate = await base44.entities.Farmer.update(id, { verification_status: status })
         if(typeof onlineUpdate == 'string' && onlineUpdate.includes('<!doctype html>')){

@@ -17,12 +17,11 @@ export function useSyncManager() {
       const hasPending = await OfflineService.hasPendingData();
 
       if (hasPending) {
-        // console.log("📤 Memulai Push Sinkronisasi...");
         await OfflineService.syncAllPending();
         toast.success("Sinkronisasi data berhasil");
       } else {
-        // console.log("🔄 Data lokal bersih. Melakukan Pull dari server...");
-        await OfflineService.downloadFromServer();
+        // await OfflineService.downloadFromServer();
+        await OfflineService.syncDataFromServer();
       }
     } catch (error) {
       console.error('Sync process failed:', error);

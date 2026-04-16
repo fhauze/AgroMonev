@@ -34,17 +34,17 @@ import { OfflineService } from "@/components/common/offlineStorage";
           console.log(resp)
           if (Array.isArray(resp)) serverData = resp;
         } catch (e) { 
-          console.warn("Server lands offline/error"); 
+          console.warn("Server lands offline/error : ", e); 
         }
 
         const localData = await OfflineService.getEntities("lands");
-        console.log(localData)
+        
         const combined = new Map();
         serverData.forEach(l => { if(l.id) combined.set(l.id, l); });
         localData.forEach(l => { if(l.id) combined.set(l.id, l); });
 
         const result = Array.from(combined.values());
-        console.log("🔍 Total Lands Loaded (Server + Local):", result.length);
+        // console.log("🔍 Total Lands Loaded (Server + Local):", result.length);
         return result;
       }
     });
@@ -59,8 +59,8 @@ import { OfflineService } from "@/components/common/offlineStorage";
       queryFn: async () => {
         let serverData = [];
         try {
-          const resp = await base44.entities.Farmer.list();
-          serverData = Array.isArray(resp) ? resp : [];
+          const resp = await entity("map","profile").list();
+          serverData = Array.isArray(resp?.data) ? resp.data : Array.isArray(resp?.data?.data) ? resp?.data?.data : [];
         } catch (e) { }
         const localData = await OfflineService.getEntities("farmers");
         const combined = new Map();
@@ -72,7 +72,12 @@ import { OfflineService } from "@/components/common/offlineStorage";
 
     const { data: rawplants = [] } = useQuery({
       queryKey: ["plants"],
-      queryFn: () => base44.entities.Plant.list()
+      queryFn: async () => {
+        const rawplants = await entity('map','tanaman').list();
+        const plants = Array.isArray(rawplants?.data) ? rawplants?.data : Array.isArray(rawplants?.data?.data) ? rawplants?.data?.data : [];
+        console.log(plants, "Tanamana")
+        return plants
+      }
     });
 
     const lands = Array.isArray(rawlands) ? rawlands : [];
@@ -82,7 +87,7 @@ import { OfflineService } from "@/components/common/offlineStorage";
     const farmerMap = useMemo(() => {
       const map = {};
       farmers.forEach(f => {
-        if (f?.id) map[f.id] = f.full_name;
+        if (f?.id) map[f.id] = f?.nama || f?.full_name || `Petani ${f.id}`;
       });
       return map;
     }, [farmers]);
@@ -99,13 +104,12 @@ import { OfflineService } from "@/components/common/offlineStorage";
     // });
 
     const filteredLands = useMemo(() => {
-      // Pastikan lands adalah array sebelum filter
       if (!Array.isArray(lands)) return [];
 
       return lands.filter(land => {
         if (!land) return false;
 
-        const landName = land.name?.toLowerCase() || "";
+        const landName = land.nama?.toLowerCase() || "";
         const village = land.village?.toLowerCase() || "";
         const farmerName = farmerMap[land.farmer_id]?.toLowerCase() || "";
         const searchTerm = search.toLowerCase();
@@ -134,7 +138,7 @@ import { OfflineService } from "@/components/common/offlineStorage";
         });
         return map;
       }, [plants]);
-      
+    console.log(farmerMap,farmers, "FArmer MAp", plants, lands);
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
         <div className="max-w-7xl mx-auto p-6 space-y-6">
@@ -242,8 +246,8 @@ import { OfflineService } from "@/components/common/offlineStorage";
                 >
                   <LandCard 
                     land={land} 
-                    farmerName={farmerMap[land.farmer_id]}
-                    plantCount={plants.filter(p => p.land_id === land.id).length}
+                    farmerName={farmerMap[land.profile_id]}
+                    plantCount={plants.filter(p => p.lahan.id === land.id).length}
                   />
                 </motion.div>
               ))}

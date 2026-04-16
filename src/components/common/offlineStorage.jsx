@@ -14,7 +14,7 @@ const agroApi = axios.create({
 export const OfflineService = {
   
   hasPendingData: async () => {
-    const tables = ['farmers', 'lands', 'plants', 'harvest', 'plant_inspections', 'offtakers', 'validators'];
+    const tables = ['farmers', 'lands', 'plants', 'harvests', 'plant_inspections', 'offtakers', 'validators', 'distributions','profiles'];
     for (const table of tables) {
       const count = await db[table].where('sync_status').equals('pending').count();
       if (count > 0) return true;
@@ -44,7 +44,7 @@ export const OfflineService = {
       });
       return id;
     } catch (err) {
-      console.error("❌ Dexie Error:", err);
+      console.error("Error:", err);
       throw err;
     }
   },
@@ -78,8 +78,6 @@ export const OfflineService = {
       if (filter && typeof filter === 'object' && Object.keys(filter).length > 0) {
         return await dbTable.where(filter).toArray();
       }
-      
-      console.log(`Fetching ...... all from ${table}`);
       return await dbTable.reverse().toArray();
 
     } catch (e) {
@@ -93,9 +91,11 @@ export const OfflineService = {
         db.farmers.where('sync_status').equals('pending').count(),
         db.lands.where('sync_status').equals('pending').count(),
         db.plants.where('sync_status').equals('pending').count(),
-        db.harvest.where('sync_status').equals('pending').count(),
+        db.harvests.where('sync_status').equals('pending').count(),
         db.plant_inspections.where('sync_status').equals('pending').count(),
         db.offtakers.where('sync_status').equals('pending').count(),
+        db.profiles.where('sync_status').equals('pending').count(),
+        db.distributions.where('sync_status').equals('pending').count(),
         // db.validators.where('sync_status').equals('pending').count(),
       ]);
       
@@ -126,6 +126,50 @@ export const OfflineService = {
       throw err;
     }
   },
+  syncDataFromServer : async () => {
+    const token = localStorage.getItem('access_token');
+    const baseURL = import.meta.env.VITE_BASE44_API_URL.replace(/\/+$/, "");
+    const syncConfigs = [
+      { from: db.farmers, to:"profile", endpoint: 'auth/profile/1' },
+      { from: db.lands, to:"lahan", endpoint: 'map/lahan' },
+      { from: db.plants, to:"tanaman", endpoint: 'map/tanaman' },
+      { from: db.harvests, to:"panen", endpoint: 'map/panen'},
+      { from: db.plant_inspections, to:"inspeksi", endpoint: 'map/inspeksi'},
+      { from: db.offtakers, to:"offtaker", endpoint: 'map/offtaker'},
+      { from: db.distributions, to:"panen", endpoint: 'distribusi/panen'},
+      { from: db.villages, to: "desa-kelurahan", endpoint: "master/desa-kelurahan" },
+      { from: db.districts, to: "kecamatan", endpoint: "master/kecamatan"},
+      { from: db.regencies, to: "kabupaten-kota", endpoint: "master/kabupaten-kota"},
+      { from: db.provinces, to: "provinsi", endpoint: "master/provinsi"},
+    ];
+
+    for (const config of syncConfigs) {
+      try {
+        console.log(`Syncing table: ${config.from.name}...`);
+        
+        const response = await axios.get(`${baseURL}/api/${config.endpoint}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        console.log(response, "Res")
+        if (response.status !== 200) throw new Error(`HTTP error! status: ${response.status}`);
+
+        const result = await response;
+        const dataToSave = config.to ? result[config.to] : (result.data || result.data.data || []);
+
+        if (Array.isArray(dataToSave)) {
+          await config.table.bulkPut(dataToSave);
+          console.log(`Berhasil sinkron ${dataToSave.length} data ke ${config.table.name}`);
+        } else if (typeof dataToSave === 'object' && dataToSave !== null) {
+          await config.table.put(dataToSave);
+        }
+
+      } catch (error) {
+        console.error(`Gagal sinkronisasi ${config.endpoint}:`, error);
+        // Lanjut ke config berikutnya meski satu error
+        continue; 
+      }
+    }
+  },
   syncAll: async () => {
     const queue = await db.pending_sync.toArray();
     for (const item of queue) {
@@ -147,18 +191,19 @@ export const OfflineService = {
     const baseURL = import.meta.env.VITE_BASE44_API_URL.replace(/\/+$/, "");
     console.log(user, "Userr")
     const syncConfigs = [
-      { endpoint: `auth/profile/1`, table: db.farmers },
+      { endpoint: `auth/profile/1`, table: db.farmers }, 
+      // { endpoint: `auth/me`, table: db.users }, 
       { endpoint: 'map/lahan', table: db.lands },
       { endpoint: 'map/tanaman', table: db.plants },
-      { endpoint: 'map/panen', table: db.harvest},
+      { endpoint: 'map/panen', table: db.harvests},
       { endpoint: 'map/inspeksi', table: db.plant_inspections},
       { endpoint: 'map/offtaker', table: db.offtakers},
       { endpoint: 'distribusi/panen', table: db.distributions},
       // { endpoint: 'map/validator', table: db.validators}
-      { table: db.villages, to: "desa-kelurahan", endpoint: "master/desa-kelurahan" },
-      { table: db.districts, to: "kecamatan", endpoint: "master/kecamatan"},
-      { table: db.regencies, to: "kabupaten-kota", endpoint: "master/kabupaten-kota"},
-      { table: db.provinces, to: "provinsi", endpoint: "master/provinsi"},
+      { endpoint: "master/desa-kelurahan", table: db.villages, to: "desa-kelurahan"},
+      { endpoint: "master/kecamatan", table: db.districts, to: "kecamatan"},
+      { endpoint: "master/kabupaten-kota", table: db.regencies, to: "kabupaten-kota"},
+      { endpoint: "master/provinsi", table: db.provinces, to: "provinsi"},
 
     ];
 
@@ -168,34 +213,55 @@ export const OfflineService = {
           headers: { Authorization: `Bearer ${token}` }
         });
 
-        const respondData = Array.isArray(respond.data) ? respond.data : respond.data.data || [];
-        if(respondData.length > 0){
-          const localIds = await config.table.toCollection().primaryKeys();
-          const newData = respondData.filter(item => !localIds.includes(item.id));
-          if(newData.length > 0){
-            await config.table.bulkAdd(newData.map(item => ({
-              ...item,
-              sync_status: 'synced'
-            })));
-          }else {
-            // console.log(` Data ${config.endpoint} sudah mutakhir (tidak ada data baru).`);
+        const rawData = respond.data?.data || respond.data;
+        console.log(rawData, "Raw Data")
+        let respondData = [];
+
+        // const respondData = (config.endpoint.includes('auth/profile') || config.endpoint.includes('auth/me')) 
+        //   ? [rawData] 
+        //   : Array.isArray(rawData) ? rawData : [];
+
+        if (config.endpoint.includes('auth/profile') || config.endpoint.includes('auth/me')) {
+          if (rawData && typeof rawData === 'object') {
+            const { password, ...cleanData } = rawData; 
+            respondData = [cleanData]
+          }
+        } else {
+          // Jika data memang seharusnya array (List)
+          respondData = Array.isArray(rawData) ? rawData : [];
+        }
+
+        console.log(respondData,"  || data  " ,config.table)
+        if(respondData.length > 0 && respondData[0] !== null){
+          const preparedData = respondData.map(item => ({
+            ...item,
+            id: item.id, 
+            sync_status: 'synced'
+          })).filter(item => item.id !== undefined);
+
+          if (preparedData.length > 0) {
+            await config.table.bulkPut(preparedData);
+            console.log(`✅ Berhasil sync ${preparedData.length} data ke ${config.table.name}`);
           }
         }
       }
 
     } catch (err) {
       console.error("Gagal download data:", err);
+      if (err.failures) {
+        console.error("Detail kegagalan Dexie:", err.failures);
+      }
     }
   },
   syncAllPending: async () => {
     const tables = [
-      { from: db.farmers, to:"profile", endpoint: 'auth/profile' },
+      { from: db.farmers, to:"profile", endpoint: 'auth/profile/1' },
       { from: db.lands, to:"lahan", endpoint: 'map/lahan' },
       { from: db.plants, to:"tanaman", endpoint: 'map/tanaman' },
-      { endpoint: 'map/panen', to:"panen", from: db.harvest},
-      { endpoint: 'map/inspeksi', to:"inspeksi", from: db.plant_inspections},
-      { endpoint: 'map/offtaker', to:"offtaker", from: db.offtakers},
-      { endpoint: 'distribusi/panen', to:"panen", from: db.distributions},
+      { from: db.harvests, to:"panen", endpoint: 'map/panen'},
+      { from: db.plant_inspections, to:"inspeksi", endpoint: 'map/inspeksi'},
+      { from: db.offtakers, to:"offtaker", endpoint: 'map/offtaker'},
+      { from: db.distributions, to:"panen", endpoint: 'distribusi/panen'},
       // { endpoint: 'map/validator', to:"validator", from: db.validators}
       { from: db.villages, to: "desa-kelurahan", endpoint: "master/desa-kelurahan" },
       { from: db.districts, to: "kecamatan", endpoint: "master/kecamatan"},

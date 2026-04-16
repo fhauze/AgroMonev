@@ -11,6 +11,15 @@
 		},
 		{
 			"path": "../pertamina-point"
+		},
+		{
+			"path": "../dev/wayfinder-project"
+		},
+		{
+			"path": "../own-cloud"
+		},
+		{
+			"path": "../skhp"
 		}
 	],
 	"settings": {}

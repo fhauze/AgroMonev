@@ -51,6 +51,48 @@ export default function FarmerPortal() {
   const [isEditing, setIsEditing] = useState(false);
   const [selectedKtp, setSelectedKtp] = useState(null);
   const [ktpPreview, setKtpPreview] = useState(null);
+  const [locationData, setLocationData ] = useState({
+    provinces: [],
+    regencies: [],
+    districts: [],
+    villages: []
+  });
+
+  useEffect(() => {
+    const prepareDataLocation = async() => {
+      if(!navigator.onLine){
+        try{
+        const [villages, districts, regencies, provinces] = await Promise.all([
+          OfflineService.getEntities('villages'),
+          OfflineService.getEntities('districts'),
+          OfflineService.getEntities('regencies'),
+          OfflineService.getEntities('provinces'),
+        ]);
+
+        setLocationData({
+          villages: villages, districts:districts, regencies:regencies,provinces:provinces});
+        }catch(err){
+          console.error(err)
+        }
+      }else{
+        try{
+        const [villages, districts, regencies, provinces] = await Promise.all([
+          OfflineService.getEntities('villages'),
+          OfflineService.getEntities('districts'),
+          OfflineService.getEntities('regencies'),
+          OfflineService.getEntities('provinces'),
+        ]);
+
+        setLocationData({villages: villages, districts:districts, regencies:regencies,provinces:provinces});
+        console.log("Offline")
+        }catch(err){
+          console.error(err)
+        }
+      }
+    };
+
+    prepareDataLocation();
+  }, []);
 
   const [farmerFormData, setFarmerFormData] = useState({
     nama: farmer?.nama || farmer?.name || "",
@@ -117,8 +159,14 @@ export default function FarmerPortal() {
 
         return data;
       }catch(err){
-        console.error("data gagal diabbil")
-        return []
+        console.error("Local Data")
+        const localDist = await OfflineService.getEntities('distributions') || [];
+        const filteredDist = localDist && localDist.length > 0 ? localDist.filter((dis) => {
+          if(dis.farmer_id === farmer.id){
+            return dis;
+          }
+        }) : [];
+        return filteredDist;
       }
     },
     enabled: !!farmer?.id
@@ -135,7 +183,15 @@ export default function FarmerPortal() {
         }
         return []
       }catch(err){
-        console.error("Error :",err)
+        console.warn("loda local data");
+        const localHarv = await OfflineService.getEntities('harvests') || [];
+        const filteredHarv = localHarv && localHarv.length > 0 ? 
+              localHarv.filter((data) => {
+                if(data.farmer_id === farmer.id){
+                  return data;
+                }
+              }) : [];
+        return filteredHarv;
       }
       
     },
@@ -156,6 +212,7 @@ export default function FarmerPortal() {
         console.warn("Online data is un reachable")
       }
       try{
+        console.log(profile?.id || 0, "PRofile id")
         const offlineData = await OfflineService.getEntities('lands');
         const offlineLahan = safeArray(offlineData).filter(lh => lh.profile_id === profile.id);
         const combined = new Map();
@@ -357,7 +414,11 @@ export default function FarmerPortal() {
             entity('auth', 'profile/1').list()
           ]);
 
-          const dataMe = rMe.data || [];
+          const dataMeRaw = rMe.data || [];
+          const dataMe = {
+            ...dataMeRaw,
+            'verification_status':'verified',
+          }
           const dataProfile = rFar.data || [];
 
           currentUser = {
@@ -380,16 +441,27 @@ export default function FarmerPortal() {
         }catch(err){
           console.error("Error : ", err)
           const localUser = localStorage.getItem('user_data'); 
+          const userBase = JSON.parse(localUser);
+          const localProfilesRaw = await OfflineService.getEntities('farmers') || [];
+          
+          const localProfile = localProfilesRaw && localProfilesRaw.length > 0 ? localProfilesRaw.find(prof => {
+              return Number(prof.id) === Number(userBase.id)
+            }
+          ) : null;
+
           currentUser = localUser ? JSON.parse(localUser) : null
+          currentProfile = localProfile
+          console.log(" Local Profile => ",localProfile, " Curr Profile => " ,currentProfile, " Curr User=> ",currentUser, "local profile")
         }
 
         if (currentUser) {
           setUser(currentUser);
           setFarmer(currentUser);
+          setProfile(currentUser);
           
           setFarmerProf((prev) => ({
             ...prev,
-            nama: currentUser.profile?.nama || currentUser.name || 'Tanpa Nama',
+            nama: currentUser.profile?.nama || currentUser.nama || currentUser.name || 'Tanpa Nama',
             email: currentUser.email || '',
             user_id: currentUser.id || 0
           }));
@@ -425,6 +497,28 @@ export default function FarmerPortal() {
     base44.auth.logout();
   };
 
+  useEffect(() => {
+    const autoFillLocation = async () => {
+      if(!newLandData.desa_kelurahan_id) return;
+      const selectedVillage = locationData.villages.find(data => newLandData.desa_kelurahan_id === data.id);
+      if(!selectedVillage) return;
+
+      if (selectedVillage) {
+        const selectedDistrict = selectedVillage.kecamatan;
+        const selectedRegency = selectedDistrict?.kabupatenKota;
+        const selectedProvince = selectedRegency?.provinsi;
+        setLocationData((prev) => ({
+          ...prev,
+          districts: selectedDistrict ? [selectedDistrict] : [],
+          regencies: selectedRegency ? [selectedRegency] : [],
+          provinces: selectedProvince ? [selectedProvince] : [],
+        }));
+      }
+    };
+
+    autoFillLocation();
+  }, [newLandData.desa_kelurahan_id, locationData.villages]);
+
   // profile control
   const handleToggleEdit = async () => {
     const formDataBaru = new FormData();
@@ -438,7 +532,7 @@ export default function FarmerPortal() {
       formDataBaru.append('ktp', farmerFormData.ktp);
       formDataBaru.append('email', farmerFormData.email);
       formDataBaru.append('desa_kelurahan_id', '1');
-      console.log("Isi FormData:", Object.fromEntries(formDataBaru.entries()));
+      
       try {
         updateProfileMutation.mutate(formDataBaru);
         toast.success("Profil berhasil diperbarui");
@@ -529,6 +623,7 @@ export default function FarmerPortal() {
   }
   
   // Logged in but no farmer profile linked
+  
   if (!farmer) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-slate-100 flex items-center justify-center p-6">
@@ -563,6 +658,28 @@ export default function FarmerPortal() {
   const alivePlants = plants.length;
   const totalArea = lands.reduce((sum, l) => sum + parseFloat(l.area_hectares || l.luas_lahan || 0), 0);
   
+  if (user.role !== 'petani') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-slate-100 flex items-center justify-center p-6">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <Card className="border-0 shadow-xl max-w-md w-full">
+            <CardContent className="p-8 text-center">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center mx-auto mb-6">
+                <Package className="w-10 h-10 text-white" />
+              </div>
+              <h1 className="text-2xl font-bold text-slate-900 mb-2">Portal Petani</h1>
+              <p className="text-slate-500 mb-8">
+                Masuk untuk melihat data panen sampai distribusi
+              </p>
+              <Button onClick={handleLogin} className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-lg">
+                Masuk
+              </Button>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-slate-100">
       <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
@@ -1123,7 +1240,7 @@ export default function FarmerPortal() {
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Kelurahan / Desa</Label>
                 <Select 
@@ -1137,7 +1254,8 @@ export default function FarmerPortal() {
                       villages.map((village) => (
                         <SelectItem 
                             key={village.id} 
-                            value={village.id.toString()}>{village.nama}</SelectItem>
+                            value={village.id.toString()}
+                            >{village.nama}</SelectItem>
                       ))
                     ) : (
                       <div className="">Memuat Data</div>
@@ -1145,33 +1263,29 @@ export default function FarmerPortal() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 gap-4">
                 <Label>Kecamatan</Label>
                 <Input
-                  value={newLandData.district}
-                  onChange={(e) => setNewLandData(prev => ({ ...prev, district: e.target.value ? '1' : '0' }))}
+                  value={locationData.districts[0]?.nama || "-"}
+                  readOnly
                   placeholder="Nama kecamatan"
                 />
               </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Kabupaten</Label>
                 <Input
-                  value={newLandData.regency}
-                  onChange={(e) => setNewLandData(prev => ({ ...prev, regency: e.target.value ? '1' : '0'}))}
+                  value={locationData.regencies[0]?.nama}
+                  readOnly
                   placeholder="Nama kabupaten"
                 />
               </div>
-            </div>
-            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label>Desa</Label>
+                <Label>Provinsi</Label>
                 <Input
-                  value={newLandData.village}
-                  onChange={
-                    (e) => setNewLandData(prev => ({
-                       ...prev, 
-                       village: e.target.value,
-                      }))}
+                  value={locationData.provinces[0]?.nama}
+                  readOnly
                   placeholder="Nama desa"
                 />
               </div>

@@ -23,7 +23,7 @@ export default function Farmers() {
     queryFn: async () => {
       let serverData;
       try {
-        serverData = await entity("map","petani").list();
+        serverData = await entity("auth","users").list();
       } catch (err) {
         console.warn("Server unreachable, loading local data only");
       }
@@ -47,13 +47,16 @@ export default function Farmers() {
   // Filter farmers
   const filteredFarmers = farmersSafe.filter(farmer => {
     const matchSearch = !search || 
-      farmer.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-      farmer.nik?.includes(search) ||
+      farmer.full_name?.toLowerCase().includes(search.toLowerCase()) || farmer.nama?.toLowerCase().includes(search.toLowerCase()) ||
+      farmer.nik?.includes(search) || farmer.kk?.includes(search) || farmer.ktp?.includes(search) || 
       farmer.farmer_group?.toLowerCase().includes(search.toLowerCase());
-    
-    const matchStatus = statusFilter === "all" || farmer.verification_status === statusFilter;
-    const matchRegion = regionFilter === "all" || farmer.regency === regionFilter;
+      
+    const currentStatus = farmer.user.email_verified_at !== null || farmer.user.email_verified_at !== undefined ? 'verified' : 'pending';
 
+    const matchStatus = statusFilter === "all" || currentStatus === statusFilter;
+    
+    const matchRegion = regionFilter === "all" || farmer.regency === regionFilter;
+    console.log("status filter => ", matchStatus, farmer.user.email_verified_at, statusFilter);
     return matchSearch && matchStatus && matchRegion;
   });
 

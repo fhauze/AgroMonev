@@ -89,22 +89,30 @@ export const AuthProvider = ({ children }) => {
       const userResponse = await axios.get(`${getBaseUrl()}/api/auth/me`, {
         headers: { Authorization: `Bearer ${access_token}` }
       });
-      const userData = userResponse.data;
+      const userDataRaw = userResponse.data;
+      const userData = {
+        ...userDataRaw,
+        verification_status: 'verified'
+      }
 
       localStorage.setItem('access_token', access_token);
       setToken(access_token);
 
       if (!db.isOpen()) await db.open();
       const encryptedPW = encryptPassword(password);
-
+      try{
       await db.users.put({
         id: userData.id || userData.user_id,
         ...userData,
         password:encryptedPW,
         sync_status: 'synced',
-        last_login: new Date().toISOString()
+        last_login: new Date().toISOString(),
+        access_token: access_token,
+        verification_status: 'verified'
       });
-
+      }catch(err){
+        console.log(err)
+      }
       setUser(userData);
       setIsAuthenticated(true);
       return { success: true };
@@ -113,13 +121,19 @@ export const AuthProvider = ({ children }) => {
       try {
         if (!db.isOpen()) await db.open();
         const localUser = await db.users.where("email").equals(email).first();
-
+        
         if (localUser && localUser.password) {
           const decryptedPW = decryptPassword(localUser.password);
+          
           if (decryptedPW === password) {
+            localStorage.setItem('access_token', localUser.access_token);
+            localStorage.setItem('user_data', JSON.stringify(localUser));
+            
+            setToken(localUser.access_token);
             setUser(localUser);
             setIsAuthenticated(true);
-            return { success: true, isOffline: true };
+            
+            return { success: true};
           }
         }
       } catch (dexieErr) {
